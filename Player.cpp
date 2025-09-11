@@ -32,12 +32,18 @@ bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f
 	return false;
 }
 
-void Player::updateInput(const float& aDeltaTime)
+void Player::updateInput(const float& aDeltaTime, sf::Window* aWindow)
 {
+	sf::Vector2i center(gbl::screen::width / 2, gbl::screen::height / 2);
+	sf::Vector2i mousePos = sf::Mouse::getPosition(*aWindow);
+	int dx = mousePos.x - center.x;
+	int dy = mousePos.y - center.y;
+
 	// rotation
 	float rotSpeed = 0.f;
 	float oldDirX = direction.x;
 	float oldPlaneX = plane.x;
+	rotSpeed = dx * mouseSensitivity;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Right))
 		rotSpeed = aDeltaTime * 3.f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Left))
@@ -46,6 +52,12 @@ void Player::updateInput(const float& aDeltaTime)
 	direction.y = oldDirX * sin(rotSpeed) + direction.y * cos(rotSpeed);
 	plane.x = plane.x * cos(rotSpeed) - plane.y * sin(rotSpeed);
 	plane.y = oldPlaneX * sin(rotSpeed) + plane.y * cos(rotSpeed);
+
+	// vertical movement
+	pitch -= dy;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down)) pitch -= aDeltaTime * 200.f;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) pitch += aDeltaTime * 200.f;
+	pitch = std::min(std::max(pitch, -gbl::screen::height / 1.f ), gbl::screen::height / 1.f );
 
 	// position
 	sf::Vector2f p;
@@ -71,6 +83,8 @@ void Player::updateInput(const float& aDeltaTime)
 		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x, position.y + p.y)))
 			position.y = position.y + p.y;
 	}
+
+	sf::Mouse::setPosition(center, *aWindow);
 }
 
 void Player::updateRays()
@@ -119,7 +133,7 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 	c.setPosition(scale * position);
 	aWindow->draw(c);
 
-	for (int x = 0; x < gbl::screen::width; x++)
+	for (int x = 0; x < gbl::screen::width; x += 20)
 	{
 		float l = rays[x].getLength() * scale;
 		sf::Vertex v1{ rays[x].getPositon() * scale, sf::Color::Blue };
@@ -135,8 +149,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	{
 		Ray& r = rays[x];
 		float lineH = gbl::screen::height / r.getLength() * gbl::map::cellSize;
-		float s = (gbl::screen::height - lineH) / 2;
-		float e = (gbl::screen::height + lineH) / 2;
+		float s = (gbl::screen::height - lineH) / 2 + pitch;
+		float e = (gbl::screen::height + lineH) / 2 + pitch;
 		s = std::max(0.f, s);
 		e = std::min(static_cast<float>(gbl::screen::height), e);
 		sf::Color c = gbl::colors[r.getWallHit()];
@@ -155,9 +169,9 @@ Player::Player()
 {
 }
 
-void Player::update(const float& aDeltaTime)
+void Player::update(const float& aDeltaTime, sf::Window* aWindow)
 {
-	updateInput(aDeltaTime);
+	updateInput(aDeltaTime, aWindow);
 	updateRays();
 }
 

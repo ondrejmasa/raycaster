@@ -4,6 +4,7 @@
 void Game::initWindow()
 {
 	window = new sf::RenderWindow(sf::VideoMode(sf::Vector2u(gbl::screen::width, gbl::screen::height)), "Game 3", sf::Style::Close | sf::Style::Titlebar);
+	window->setMouseCursorVisible(false);
 }
 
 void Game::pollEvents()
@@ -49,7 +50,7 @@ void Game::update()
 {
 	updateFPS();
 	pollEvents();
-	player.update(deltaTime);
+	player.update(deltaTime, window);
 }
 
 void Game::render()
