@@ -27,6 +27,9 @@
     <ClCompile Include="Ray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Resources.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -41,5 +44,28 @@
     <ClInclude Include="Ray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="source\textures\wood.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\redbrick.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\purplestone.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\greystone.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\colorstone.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\bluestone.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

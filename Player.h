@@ -1,8 +1,10 @@
 #pragma once
 #include <iostream>
+#include <vector>
 #include <SFML/Graphics.hpp>
 #include "global.h"
 #include "Ray.h"
+#include "Resources.h"
 
 class Player
 {
@@ -13,7 +15,7 @@ private:
 	sf::Vector2f plane;
 	float pitch = 0.f;
 	const float mouseSensitivity = 0.003f;
-	std::array<Ray, gbl::screen::width> rays;
+	std::vector<Ray> rays;
 	bool checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos);
 	void updateInput(const float& aDeltaTime, sf::Window* aWindow);
 	void updateRays();

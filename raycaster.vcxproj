@@ -137,12 +137,22 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Ray.cpp" />
+    <ClCompile Include="Resources.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="Resources.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="source\textures\bluestone.png" />
+    <Image Include="source\textures\colorstone.png" />
+    <Image Include="source\textures\greystone.png" />
+    <Image Include="source\textures\purplestone.png" />
+    <Image Include="source\textures\redbrick.png" />
+    <Image Include="source\textures\wood.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

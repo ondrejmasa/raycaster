@@ -151,15 +151,40 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		float lineH = gbl::screen::height / r.getLength() * gbl::map::cellSize;
 		float s = (gbl::screen::height - lineH) / 2 + pitch;
 		float e = (gbl::screen::height + lineH) / 2 + pitch;
-		s = std::max(0.f, s);
-		e = std::min(static_cast<float>(gbl::screen::height), e);
-		sf::Color c = gbl::colors[r.getWallHit()];
+		//s = std::max(0.f, s);
+		//e = std::min(static_cast<float>(gbl::screen::height-1), e);
+		//sf::Color c = gbl::colors[r.getWallHit()];
+		//if (r.getIsHitVertical())
+		//	c = sf::Color(c.r * 0.9f, c.g * 0.9f, c.b * 0.9f);
+		//sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c };
+		//sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c };
+		//sf::Vertex line[] = { v1, v2 };
+		//aWindow->draw(line, 2, sf::PrimitiveType::Lines);
+		auto& tex = Resources::getTexture(r.getWallHit() - 1);
+		double wallX;
 		if (r.getIsHitVertical())
-			c = sf::Color(c.r * 0.9f, c.g * 0.9f, c.b * 0.9f);
-		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c };
-		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c };
-		sf::Vertex line[] = { v1, v2 };
-		aWindow->draw(line, 2, sf::PrimitiveType::Lines);
+			wallX = r.getPositon().y + r.getLength() * r.getDirection().y ;
+		else
+			wallX = r.getPositon().x + r.getLength() * r.getDirection().x;
+		wallX -= floor(wallX / gbl::map::cellSize) * gbl::map::cellSize;
+
+		int texX = wallX / gbl::map::cellSize * tex.getSize().x;
+
+		//if ((r.getIsHitVertical() && r.getDirection().x > 0) ||
+		//	(!r.getIsHitVertical() && r.getDirection().y < 0))
+		//{
+		//	texX = tex.getSize().x - texX - 1;
+		//}
+		//double step = 64.0 / lineH;
+		//double texPos = (s - (gbl::screen::height - lineH) / 2 - pitch);
+
+		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), sf::Color::White, sf::Vector2f(texX, 0.f)};
+		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), sf::Color::White, sf::Vector2f(texX, tex.getSize().y) };
+		sf::VertexArray line(sf::PrimitiveType::Lines);
+		line.append(v1);
+		line.append(v2);
+		sf::RenderStates states{ &Resources::getTexture(r.getWallHit() - 1) };
+		aWindow->draw(line, &Resources::getTexture(r.getWallHit() - 1));
 	}
 }
 
@@ -167,7 +192,7 @@ Player::Player()
 	: position(250.f, 250.f),
 	  direction(1.f, 0.f),
 	  plane(0.f, 0.66f),
-	  rays { }
+	  rays { gbl::screen::width, Ray{} }
 {
 }
 
