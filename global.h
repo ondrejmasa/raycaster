@@ -6,8 +6,8 @@ namespace gbl
 {
     namespace screen
     {
-        constexpr unsigned short width = 640;
-        constexpr unsigned short height = 480;
+        constexpr unsigned short width = 1280;
+        constexpr unsigned short height = 720;
     }
 
     namespace map

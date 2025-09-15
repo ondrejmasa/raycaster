@@ -9,12 +9,14 @@ private:
 	sf::Vector2f direction;
 	float length;
 	int wallHit;
+	bool isHitVertical;
 public:
 	Ray();
 	const sf::Vector2f& getPositon() const;
 	const sf::Vector2f& getDirection() const;
 	const float& getLength() const;
 	const int& getWallHit() const;
+	const bool& getIsHitVertical() const;
 	float cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir);
 };
 

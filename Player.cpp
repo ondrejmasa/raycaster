@@ -154,6 +154,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		s = std::max(0.f, s);
 		e = std::min(static_cast<float>(gbl::screen::height), e);
 		sf::Color c = gbl::colors[r.getWallHit()];
+		if (r.getIsHitVertical())
+			c = sf::Color(c.r * 0.9f, c.g * 0.9f, c.b * 0.9f);
 		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c };
 		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c };
 		sf::Vertex line[] = { v1, v2 };
@@ -162,7 +164,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 }
 
 Player::Player()
-	: position(200.f, 200.f),
+	: position(250.f, 250.f),
 	  direction(1.f, 0.f),
 	  plane(0.f, 0.66f),
 	  rays { }

@@ -24,6 +24,11 @@ const int& Ray::getWallHit() const
 	return wallHit;
 }
 
+const bool& Ray::getIsHitVertical() const
+{
+	return isHitVertical;
+}
+
 float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 {
 	positon = aPos;
@@ -34,7 +39,7 @@ float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 	sf::Vector2i step;
 	float wallDist;
 	bool isHit = false;
-	int side;
+	char side;
 
 	if (aRayDir.x < 0)
 	{
@@ -79,6 +84,7 @@ float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 	}
 
 	wallDist = side == 0 ? sideDist.x - deltaDist.x : sideDist.y - deltaDist.y;
+	isHitVertical = side == 0;
 	length = wallDist;
 	return wallDist;
 ;}
