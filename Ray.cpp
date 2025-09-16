@@ -16,20 +16,25 @@ const sf::Vector2f& Ray::getDirection() const
 
 const float& Ray::getLength() const
 {
-	return length;
+	return m_length;
 }
 
 const int& Ray::getWallHit() const
 {
-	return wallHit;
+	return m_wallHit;
 }
 
 const bool& Ray::getIsHitVertical() const
 {
-	return isHitVertical;
+	return m_isHitVertical;
 }
 
-float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
+const bool& Ray::getIsHit() const
+{
+	return m_isHit;
+}
+
+void Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 {
 	positon = aPos;
 	direction = aRayDir;
@@ -37,9 +42,7 @@ float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 	sf::Vector2f sideDist;
 	sf::Vector2f deltaDist = sf::Vector2f(abs(1.f / aRayDir.x), abs(1.f / aRayDir.y)) * gbl::map::cellSize;
 	sf::Vector2i step;
-	float wallDist;
-	bool isHit = false;
-	char side;
+	m_isHit = false;
 
 	if (aRayDir.x < 0)
 	{
@@ -62,29 +65,30 @@ float Ray::cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir)
 		sideDist.y = ((mapPos.y + 1) * gbl::map::cellSize - aPos.y) / gbl::map::cellSize * deltaDist.y;
 	}
 
-	while (!isHit)
+	float currLen = std::min(sideDist.x, sideDist.y);
+	while (!m_isHit and currLen < gbl::map::maxRayLength)
 	{
 		if (sideDist.x < sideDist.y)
 		{
+			currLen = sideDist.x;
 			sideDist.x += deltaDist.x;
 			mapPos.x += step.x;
-			side = 0;
+			m_isHitVertical = true;
 		}
 		else
 		{
+			currLen = sideDist.y;
 			sideDist.y += deltaDist.y;
 			mapPos.y += step.y;
-			side = 1;
+			m_isHitVertical = false;
 		}
+		if (currLen > gbl::map::maxRayLength) break;
 		if (gbl::map::worldMap[mapPos.y][mapPos.x] > 0)
 		{
-			isHit = true;
-			wallHit = gbl::map::worldMap[mapPos.y][mapPos.x];
+			m_isHit = true;
+			m_wallHit = gbl::map::worldMap[mapPos.y][mapPos.x];
 		}
 	}
 
-	wallDist = side == 0 ? sideDist.x - deltaDist.x : sideDist.y - deltaDist.y;
-	isHitVertical = side == 0;
-	length = wallDist;
-	return wallDist;
+	m_length = currLen;
 ;}

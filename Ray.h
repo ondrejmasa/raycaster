@@ -7,9 +7,10 @@ class Ray
 private:
 	sf::Vector2f positon;
 	sf::Vector2f direction;
-	float length;
-	int wallHit;
-	bool isHitVertical;
+	float m_length;
+	int m_wallHit;
+	bool m_isHitVertical;
+	bool m_isHit; 
 public:
 	Ray();
 	const sf::Vector2f& getPositon() const;
@@ -17,6 +18,7 @@ public:
 	const float& getLength() const;
 	const int& getWallHit() const;
 	const bool& getIsHitVertical() const;
-	float cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir);
+	const bool& getIsHit() const;
+	void cast(const sf::Vector2f& aPos, const sf::Vector2f& aRayDir);
 };
 

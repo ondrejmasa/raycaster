@@ -135,9 +135,11 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 
 	for (int x = 0; x < gbl::screen::width; x += 20)
 	{
-		float l = rays[x].getLength() * scale;
-		sf::Vertex v1{ rays[x].getPositon() * scale, sf::Color::Blue };
-		sf::Vertex v2{ rays[x].getPositon() * scale + l * rays[x].getDirection(), sf::Color::Blue };
+		Ray& r = rays[x];
+		if (!r.getIsHit()) continue;
+		float l = r.getLength() * scale;
+		sf::Vertex v1{ r.getPositon() * scale, sf::Color::Blue };
+		sf::Vertex v2{ r.getPositon() * scale + l * r.getDirection(), sf::Color::Blue };
 		sf::Vertex line[] = { v1, v2 };
 		aWindow->draw(line, 2, sf::PrimitiveType::Lines);
 	}
@@ -145,21 +147,14 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 
 void Player::renderWorld(sf::RenderTarget* aWindow)
 {
+	std::unordered_map<int, sf::VertexArray> lines;
 	for (unsigned short x = 0; x < rays.size(); ++x)
 	{
 		Ray& r = rays[x];
+		if (!r.getIsHit()) continue;
 		float lineH = gbl::screen::height / r.getLength() * gbl::map::cellSize;
 		float s = (gbl::screen::height - lineH) / 2 + pitch;
 		float e = (gbl::screen::height + lineH) / 2 + pitch;
-		//s = std::max(0.f, s);
-		//e = std::min(static_cast<float>(gbl::screen::height-1), e);
-		//sf::Color c = gbl::colors[r.getWallHit()];
-		//if (r.getIsHitVertical())
-		//	c = sf::Color(c.r * 0.9f, c.g * 0.9f, c.b * 0.9f);
-		//sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c };
-		//sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c };
-		//sf::Vertex line[] = { v1, v2 };
-		//aWindow->draw(line, 2, sf::PrimitiveType::Lines);
 		auto& tex = Resources::getTexture(r.getWallHit() - 1);
 		double wallX;
 		if (r.getIsHitVertical())
@@ -170,21 +165,41 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 
 		int texX = wallX / gbl::map::cellSize * tex.getSize().x;
 
-		//if ((r.getIsHitVertical() && r.getDirection().x > 0) ||
-		//	(!r.getIsHitVertical() && r.getDirection().y < 0))
-		//{
-		//	texX = tex.getSize().x - texX - 1;
-		//}
-		//double step = 64.0 / lineH;
-		//double texPos = (s - (gbl::screen::height - lineH) / 2 - pitch);
+		if ((r.getIsHitVertical() and r.getDirection().x < 0) or (!r.getIsHitVertical() && r.getDirection().y > 0))
+		{
+			texX = tex.getSize().x - texX - 1;
+		}
+		double step = 64.0 / lineH;
+		double texPos = (s - (gbl::screen::height - lineH) / 2 - pitch);
 
-		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), sf::Color::White, sf::Vector2f(texX, 0.f)};
-		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), sf::Color::White, sf::Vector2f(texX, tex.getSize().y) };
-		sf::VertexArray line(sf::PrimitiveType::Lines);
-		line.append(v1);
-		line.append(v2);
-		sf::RenderStates states{ &Resources::getTexture(r.getWallHit() - 1) };
-		aWindow->draw(line, &Resources::getTexture(r.getWallHit() - 1));
+		float brightness = 1.f - r.getLength() / gbl::map::maxRayLength;
+		if (r.getLength() / gbl::map::maxRayLength > 1.f)
+		{
+			std::cout << "bright: " << brightness << '\n';
+			std::cout << "Length: " << r.getLength() << '\n';
+		}
+		if (r.getIsHitVertical()) brightness *= 0.7f;
+		sf::Color c(255 * brightness, 255 * brightness, 255 * brightness);
+		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c, sf::Vector2f(texX, 0.f)};
+		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c, sf::Vector2f(texX, tex.getSize().y) };
+
+		sf::VertexArray& va = lines[r.getWallHit() - 1];
+		if (va.getPrimitiveType() == sf::PrimitiveType::Points) 
+		{
+			va.setPrimitiveType(sf::PrimitiveType::Lines); 
+		}
+		va.append(v1);
+		va.append(v2);
+
+		//sf::VertexArray line(sf::PrimitiveType::Lines);
+		//line.append(v1);
+		//line.append(v2);
+		//sf::RenderStates states{ &Resources::getTexture(r.getWallHit() - 1) };
+		//aWindow->draw(line, &Resources::getTexture(r.getWallHit() - 1));
+	}
+	for (auto& p : lines)
+	{
+		aWindow->draw(p.second, &Resources::getTexture(p.first));
 	}
 }
 
