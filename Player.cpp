@@ -57,7 +57,7 @@ void Player::updateInput(const float& aDeltaTime, sf::Window* aWindow)
 	pitch -= dy;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down)) pitch -= aDeltaTime * 200.f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) pitch += aDeltaTime * 200.f;
-	pitch = std::min(std::max(pitch, -gbl::screen::height / 1.f ), gbl::screen::height / 1.f );
+	pitch = std::min(std::max(pitch, -gbl::screen::height / 2.f ), gbl::screen::height / 2.f );
 
 	// position
 	sf::Vector2f p;
@@ -133,6 +133,7 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 	c.setPosition(scale * position);
 	aWindow->draw(c);
 
+	sf::VertexArray lines(sf::PrimitiveType::Lines);
 	for (int x = 0; x < gbl::screen::width; x += 20)
 	{
 		Ray& r = rays[x];
@@ -140,13 +141,51 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 		float l = r.getLength() * scale;
 		sf::Vertex v1{ r.getPositon() * scale, sf::Color::Blue };
 		sf::Vertex v2{ r.getPositon() * scale + l * r.getDirection(), sf::Color::Blue };
-		sf::Vertex line[] = { v1, v2 };
-		aWindow->draw(line, 2, sf::PrimitiveType::Lines);
+		lines.append(v1);
+		lines.append(v2);
 	}
+	aWindow->draw(lines);
 }
 
 void Player::renderWorld(sf::RenderTarget* aWindow)
 {
+	float horizon = gbl::screen::height / 2.f + pitch;
+	float posZ = 0.5f * gbl::screen::height;
+	sf::Vector2f rayDirLeft = direction - plane;
+	sf::Vector2f rayDirRight = direction + plane;
+	sf::Image& tex = Resources::getFloorTexture();
+	std::unique_ptr<uint8_t[]> floorPixels = std::make_unique<uint8_t[]>(gbl::screen::width * gbl::screen::height * 4);
+	const uint8_t* texData = tex.getPixelsPtr();
+	unsigned int texWidth = tex.getSize().x;
+	unsigned int texHeight = tex.getSize().y;
+	for (unsigned short y = horizon + 1; y < gbl::screen::height; ++y)
+	{
+		short p = y - horizon;
+		float rowDist = posZ / p;
+		sf::Vector2f floorStep = rowDist * (rayDirRight - rayDirLeft) / static_cast<float>(gbl::screen::width);
+		sf::Vector2f floorPos = position / gbl::map::cellSize + rowDist * rayDirLeft;
+		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
+		for (unsigned short x = 0; x < gbl::screen::width; ++x)
+		{
+			sf::Vector2i cell(floorPos);
+			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
+			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
+			
+			const uint8_t* texPtr = texData + (ty * texWidth + tx) * 4;
+
+			rowPtr[0] = texPtr[0];
+			rowPtr[1] = texPtr[1];
+			rowPtr[2] = texPtr[2];
+			rowPtr[3] = texPtr[3];
+			rowPtr += 4;
+			
+			floorPos += floorStep;
+		}
+	}
+	floorTexture.update(floorPixels.get(), sf::Vector2u(gbl::screen::width, gbl::screen::height), sf::Vector2u(0, 0));
+	sf::Sprite sprite{ floorTexture };
+	aWindow->draw(sprite);
+
 	std::unordered_map<int, sf::VertexArray> lines;
 	for (unsigned short x = 0; x < rays.size(); ++x)
 	{
@@ -207,7 +246,9 @@ Player::Player()
 	: position(250.f, 250.f),
 	  direction(1.f, 0.f),
 	  plane(0.f, 0.66f),
-	  rays { gbl::screen::width, Ray{} }
+	  rays { gbl::screen::width, Ray{} },
+	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
+	  floorSprite {floorTexture}
 {
 }
 

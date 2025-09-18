@@ -10,8 +10,9 @@ int main()
         "source/textures/colorstone.png",
         "source/textures/greystone.png", 
         "source/textures/purplestone.png", 
-        "source/textures/redbrick.png"
-         });
+        "source/textures/redbrick.png" });
+
+    Resources::loadFloorTexture("source/textures/redbrick.png");
 
     Game game;
 
