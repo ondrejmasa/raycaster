@@ -2,7 +2,8 @@
 
 std::vector<std::unique_ptr<sf::Texture>> Resources::textures;
 sf::Image Resources::floorImage;
-sf::Image  Resources::ceilImage;
+sf::Image Resources::ceilImage;
+sf::Texture Resources::skyTexture;
 
 void Resources::loadTextures(const std::vector<std::string>& aFiles)
 {
@@ -17,19 +18,27 @@ void Resources::loadTextures(const std::vector<std::string>& aFiles)
 	}
 }
 
-void Resources::loadFloorTexture(const std::string& aFile)
+void Resources::loadFloorImage(const std::string& aFile)
 {
 	if (!floorImage.loadFromFile(aFile))
 	{
-		throw std::runtime_error("Cannot load floor texture: " + aFile);
+		throw std::runtime_error("Cannot load floor image: " + aFile);
 	}
 }
 
-void Resources::loadCeilTexture(const std::string& aFile)
+void Resources::loadCeilImage(const std::string& aFile)
 {
 	if (!ceilImage.loadFromFile(aFile))
 	{
-		throw std::runtime_error("Cannot load floor texture: " + aFile);
+		throw std::runtime_error("Cannot load ceil image: " + aFile);
+	}
+}
+
+void Resources::loadSkyTexture(const std::string& aFile)
+{
+	if (!skyTexture.loadFromFile(aFile))
+	{
+		throw std::runtime_error("Cannot load sky texture: " + aFile);
 	}
 }
 
@@ -46,4 +55,9 @@ sf::Image& Resources::getFloorImage()
 sf::Image& Resources::getCeilImage()
 {
 	return ceilImage;
+}
+
+sf::Texture& Resources::getSkyTexture()
+{
+	return skyTexture;
 }

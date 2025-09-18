@@ -153,6 +153,7 @@
     <Image Include="source\textures\mossy.png" />
     <Image Include="source\textures\purplestone.png" />
     <Image Include="source\textures\redbrick.png" />
+    <Image Include="source\textures\sky.jpg" />
     <Image Include="source\textures\wood.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

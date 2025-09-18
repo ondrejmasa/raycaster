@@ -70,5 +70,8 @@
     <Image Include="source\textures\mossy.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="source\textures\sky.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

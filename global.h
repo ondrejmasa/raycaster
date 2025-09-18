@@ -4,6 +4,8 @@
 
 namespace gbl
 {
+    constexpr double PI = 3.14159265358979323846;
+
     namespace screen
     {
         constexpr unsigned short width = 1280;
@@ -17,7 +19,7 @@ namespace gbl
         constexpr unsigned char columns = 24;
         constexpr unsigned char rows = 24;
         constexpr float cellSize = static_cast<float>(std::min(screen::height, screen::width)) / static_cast<float>(rows);
-        constexpr float maxRayLength = 10.f * cellSize;
+        constexpr float maxRayLength = 40.f * cellSize;
 
         using MapRow = std::array<int, columns>;
         using MapType = std::array<MapRow, rows>;

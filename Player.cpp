@@ -149,7 +149,35 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 
 void Player::renderWorld(sf::RenderTarget* aWindow)
 {
+	// floor and ceil
 	float horizon = gbl::screen::height / 2.f + pitch;
+		//sky
+	float angle = std::atan2(direction.y, direction.x);
+	if (angle < 0.f)
+		angle += 2 * gbl::PI;
+	float a = angle / (2 * gbl::PI);
+	std::cout << a << '\n';
+	sf::Texture& skyTex = Resources::getSkyTexture();
+	skyTex.setRepeated(true);
+	constexpr float skyMoveSpeed = 5.f;
+	float texOffX = skyTex.getSize().x * a * skyMoveSpeed;
+	sf::VertexArray sky(sf::PrimitiveType::Triangles);
+	sf::Vertex v1{ sf::Vector2f(0.f, horizon - (float)gbl::screen::height), sf::Color::White,
+					sf::Vector2f(texOffX, 0.f) };
+	sf::Vertex v2{ sf::Vector2f(0.f, horizon), sf::Color::White,
+					sf::Vector2f(texOffX, (float)skyTex.getSize().y) };
+	sf::Vertex v3{ sf::Vector2f((float)gbl::screen::width, horizon), sf::Color::White,
+					sf::Vector2f(texOffX + (float)skyTex.getSize().x , (float)skyTex.getSize().y) };
+	sf::Vertex v4{ sf::Vector2f((float)gbl::screen::width, horizon - (float)gbl::screen::height), sf::Color::White,
+					sf::Vector2f(texOffX + (float)skyTex.getSize().x, 0.f) };
+	sky.append(v1);
+	sky.append(v2);
+	sky.append(v3);
+	sky.append(v1);
+	sky.append(v3);
+	sky.append(v4);
+	aWindow->draw(sky, &skyTex);
+		// floor + ceil
 	float posZ = 0.5f * gbl::screen::height;
 	sf::Vector2f rayDirLeft = direction - plane;
 	sf::Vector2f rayDirRight = direction + plane;
@@ -160,7 +188,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	const uint8_t* ceilTexData = ceilImg.getPixelsPtr();
 	unsigned int texWidth = floorImg.getSize().x;
 	unsigned int texHeight = floorImg.getSize().y;
-	for (unsigned short y = 0; y < gbl::screen::height; ++y)
+	// for (unsigned short y = 0; y < gbl::screen::height; ++y)
+	for (unsigned short y = horizon+1; y < gbl::screen::height; ++y)
 	{
 		bool isFloor = y > horizon;
 		short p = isFloor ? y - horizon : horizon - y;
@@ -202,6 +231,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	sf::Sprite sprite{ floorTexture };
 	aWindow->draw(sprite);
 
+	// walls
 	std::unordered_map<int, sf::VertexArray> lines;
 	for (unsigned short x = 0; x < rays.size(); ++x)
 	{
