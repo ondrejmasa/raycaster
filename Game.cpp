@@ -33,7 +33,7 @@ void Game::updateFPS()
 		fps = frameCount / timer;
 		frameCount = 0;
 		timer = 0.f;
-		std::cout << "FPS: " << fps << std::endl;
+		window->setTitle(std::to_string(fps));
 	}
 }
 

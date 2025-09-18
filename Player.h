@@ -18,8 +18,7 @@ private:
 	const float mouseSensitivity = 0.003f;
 	std::vector<Ray> rays;
 	sf::Texture floorTexture;
-	sf::Sprite floorSprite;
-	bool checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos);
+	const bool checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos) const;
 	void updateInput(const float& aDeltaTime, sf::Window* aWindow);
 	void updateRays();
 	void renderMap(sf::RenderTarget* aWindow);

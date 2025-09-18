@@ -12,7 +12,8 @@ int main()
         "source/textures/purplestone.png", 
         "source/textures/redbrick.png" });
 
-    Resources::loadFloorTexture("source/textures/redbrick.png");
+    Resources::loadFloorTexture("source/textures/mossy.png");
+    Resources::loadCeilTexture("source/textures/redbrick.png");
 
     Game game;
 

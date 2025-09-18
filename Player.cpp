@@ -2,7 +2,7 @@
 
 
 
-bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos)
+const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos) const
 {
 	int x; int y;
 	for (unsigned char i = 0; i < 4; ++i)
@@ -54,7 +54,7 @@ void Player::updateInput(const float& aDeltaTime, sf::Window* aWindow)
 	plane.y = oldPlaneX * sin(rotSpeed) + plane.y * cos(rotSpeed);
 
 	// vertical movement
-	pitch -= dy;
+	pitch -= 1.3f*dy;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down)) pitch -= aDeltaTime * 200.f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) pitch += aDeltaTime * 200.f;
 	pitch = std::min(std::max(pitch, -gbl::screen::height / 2.f ), gbl::screen::height / 2.f );
@@ -153,15 +153,20 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	float posZ = 0.5f * gbl::screen::height;
 	sf::Vector2f rayDirLeft = direction - plane;
 	sf::Vector2f rayDirRight = direction + plane;
-	sf::Image& tex = Resources::getFloorTexture();
+	sf::Image& floorImg = Resources::getFloorImage();
+	sf::Image& ceilImg = Resources::getCeilImage();
 	std::unique_ptr<uint8_t[]> floorPixels = std::make_unique<uint8_t[]>(gbl::screen::width * gbl::screen::height * 4);
-	const uint8_t* texData = tex.getPixelsPtr();
-	unsigned int texWidth = tex.getSize().x;
-	unsigned int texHeight = tex.getSize().y;
-	for (unsigned short y = horizon + 1; y < gbl::screen::height; ++y)
+	const uint8_t* floorTexData = floorImg.getPixelsPtr();
+	const uint8_t* ceilTexData = ceilImg.getPixelsPtr();
+	unsigned int texWidth = floorImg.getSize().x;
+	unsigned int texHeight = floorImg.getSize().y;
+	for (unsigned short y = 0; y < gbl::screen::height; ++y)
 	{
-		short p = y - horizon;
+		bool isFloor = y > horizon;
+		short p = isFloor ? y - horizon : horizon - y;
 		float rowDist = posZ / p;
+		if (rowDist * gbl::map::cellSize > gbl::map::maxRayLength)
+			continue;
 		sf::Vector2f floorStep = rowDist * (rayDirRight - rayDirLeft) / static_cast<float>(gbl::screen::width);
 		sf::Vector2f floorPos = position / gbl::map::cellSize + rowDist * rayDirLeft;
 		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
@@ -170,15 +175,26 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 			sf::Vector2i cell(floorPos);
 			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
 			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
-			
-			const uint8_t* texPtr = texData + (ty * texWidth + tx) * 4;
 
-			rowPtr[0] = texPtr[0];
-			rowPtr[1] = texPtr[1];
-			rowPtr[2] = texPtr[2];
-			rowPtr[3] = texPtr[3];
-			rowPtr += 4;
-			
+			float shade = 1 - rowDist * gbl::map::cellSize / gbl::map::maxRayLength;
+			if (isFloor)
+			{
+				const uint8_t* floorTexPtr = floorTexData + (ty * texWidth + tx) * 4;
+				rowPtr[0] = uint8_t(float(floorTexPtr[0]) * shade);
+				rowPtr[1] = uint8_t(float(floorTexPtr[1]) * shade);
+				rowPtr[2] = uint8_t(float(floorTexPtr[2]) * shade);
+				rowPtr[3] = uint8_t(float(floorTexPtr[3]) * shade);
+				rowPtr += 4;
+			}
+			else
+			{
+				const uint8_t* ceilTexPtr = ceilTexData + (ty * texWidth + tx) * 4;
+				rowPtr[0] = uint8_t(float(ceilTexPtr[0]) * shade);
+				rowPtr[1] = uint8_t(float(ceilTexPtr[1]) * shade);
+				rowPtr[2] = uint8_t(float(ceilTexPtr[2]) * shade);
+				rowPtr[3] = uint8_t(float(ceilTexPtr[3]) * shade);
+				rowPtr += 4;
+			}
 			floorPos += floorStep;
 		}
 	}
@@ -247,8 +263,7 @@ Player::Player()
 	  direction(1.f, 0.f),
 	  plane(0.f, 0.66f),
 	  rays { gbl::screen::width, Ray{} },
-	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
-	  floorSprite {floorTexture}
+	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height))
 {
 }
 

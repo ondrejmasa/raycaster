@@ -150,6 +150,7 @@
     <Image Include="source\textures\bluestone.png" />
     <Image Include="source\textures\colorstone.png" />
     <Image Include="source\textures\greystone.png" />
+    <Image Include="source\textures\mossy.png" />
     <Image Include="source\textures\purplestone.png" />
     <Image Include="source\textures\redbrick.png" />
     <Image Include="source\textures\wood.png" />

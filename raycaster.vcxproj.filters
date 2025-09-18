@@ -67,5 +67,8 @@
     <Image Include="source\textures\bluestone.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="source\textures\mossy.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -1,7 +1,8 @@
 #include "Resources.h"
 
 std::vector<std::unique_ptr<sf::Texture>> Resources::textures;
-sf::Image Resources::floorTexture;
+sf::Image Resources::floorImage;
+sf::Image  Resources::ceilImage;
 
 void Resources::loadTextures(const std::vector<std::string>& aFiles)
 {
@@ -18,7 +19,15 @@ void Resources::loadTextures(const std::vector<std::string>& aFiles)
 
 void Resources::loadFloorTexture(const std::string& aFile)
 {
-	if (!floorTexture.loadFromFile(aFile))
+	if (!floorImage.loadFromFile(aFile))
+	{
+		throw std::runtime_error("Cannot load floor texture: " + aFile);
+	}
+}
+
+void Resources::loadCeilTexture(const std::string& aFile)
+{
+	if (!ceilImage.loadFromFile(aFile))
 	{
 		throw std::runtime_error("Cannot load floor texture: " + aFile);
 	}
@@ -29,7 +38,12 @@ sf::Texture& Resources::getTexture(const size_t aIdx)
 	return *textures[aIdx];
 }
 
-sf::Image& Resources::getFloorTexture()
+sf::Image& Resources::getFloorImage()
 {
-	return floorTexture;
+	return floorImage;
+}
+
+sf::Image& Resources::getCeilImage()
+{
+	return ceilImage;
 }
