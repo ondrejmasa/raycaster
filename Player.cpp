@@ -149,6 +149,7 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 
 void Player::renderWorld(sf::RenderTarget* aWindow)
 {
+	sf::RenderTexture buffer(sf::Vector2u(gbl::screen::width, gbl::screen::height));
 	// floor and ceil
 	float horizon = gbl::screen::height / 2.f + pitch;
 		//sky
@@ -156,7 +157,6 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	if (angle < 0.f)
 		angle += 2 * gbl::PI;
 	float a = angle / (2 * gbl::PI);
-	std::cout << a << '\n';
 	sf::Texture& skyTex = Resources::getSkyTexture();
 	skyTex.setRepeated(true);
 	constexpr float skyMoveSpeed = 5.f;
@@ -176,7 +176,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	sky.append(v1);
 	sky.append(v3);
 	sky.append(v4);
-	aWindow->draw(sky, &skyTex);
+	//aWindow->draw(sky, &skyTex);
+	buffer.draw(sky, &skyTex);
 		// floor + ceil
 	float posZ = 0.5f * gbl::screen::height;
 	sf::Vector2f rayDirLeft = direction - plane;
@@ -188,7 +189,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	const uint8_t* ceilTexData = ceilImg.getPixelsPtr();
 	unsigned int texWidth = floorImg.getSize().x;
 	unsigned int texHeight = floorImg.getSize().y;
-	// for (unsigned short y = 0; y < gbl::screen::height; ++y)
+	//for (unsigned short y = 0; y < gbl::screen::height; ++y)
 	for (unsigned short y = horizon+1; y < gbl::screen::height; ++y)
 	{
 		bool isFloor = y > horizon;
@@ -201,35 +202,25 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
 		for (unsigned short x = 0; x < gbl::screen::width; ++x)
 		{
-			sf::Vector2i cell(floorPos);
+			sf::Vector2i cell(std::floor(floorPos.x), std::floor(floorPos.y));
 			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
 			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
 
 			float shade = 1 - rowDist * gbl::map::cellSize / gbl::map::maxRayLength;
-			if (isFloor)
-			{
-				const uint8_t* floorTexPtr = floorTexData + (ty * texWidth + tx) * 4;
-				rowPtr[0] = uint8_t(float(floorTexPtr[0]) * shade);
-				rowPtr[1] = uint8_t(float(floorTexPtr[1]) * shade);
-				rowPtr[2] = uint8_t(float(floorTexPtr[2]) * shade);
-				rowPtr[3] = uint8_t(float(floorTexPtr[3]) * shade);
-				rowPtr += 4;
-			}
-			else
-			{
-				const uint8_t* ceilTexPtr = ceilTexData + (ty * texWidth + tx) * 4;
-				rowPtr[0] = uint8_t(float(ceilTexPtr[0]) * shade);
-				rowPtr[1] = uint8_t(float(ceilTexPtr[1]) * shade);
-				rowPtr[2] = uint8_t(float(ceilTexPtr[2]) * shade);
-				rowPtr[3] = uint8_t(float(ceilTexPtr[3]) * shade);
-				rowPtr += 4;
-			}
+			const uint8_t* TexData = isFloor ? floorTexData : ceilTexData;
+			const uint8_t* floorTexPtr = TexData + (ty * texWidth + tx) * 4;
+			rowPtr[0] = uint8_t(float(floorTexPtr[0]) * shade);
+			rowPtr[1] = uint8_t(float(floorTexPtr[1]) * shade);
+			rowPtr[2] = uint8_t(float(floorTexPtr[2]) * shade);
+			rowPtr[3] = 255;
+			rowPtr += 4;
+
 			floorPos += floorStep;
 		}
 	}
 	floorTexture.update(floorPixels.get(), sf::Vector2u(gbl::screen::width, gbl::screen::height), sf::Vector2u(0, 0));
-	sf::Sprite sprite{ floorTexture };
-	aWindow->draw(sprite);
+	sf::Sprite fs{ floorTexture };
+	buffer.draw(fs);
 
 	// walls
 	std::unordered_map<int, sf::VertexArray> lines;
@@ -275,17 +266,16 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		}
 		va.append(v1);
 		va.append(v2);
-
-		//sf::VertexArray line(sf::PrimitiveType::Lines);
-		//line.append(v1);
-		//line.append(v2);
-		//sf::RenderStates states{ &Resources::getTexture(r.getWallHit() - 1) };
-		//aWindow->draw(line, &Resources::getTexture(r.getWallHit() - 1));
 	}
 	for (auto& p : lines)
 	{
-		aWindow->draw(p.second, &Resources::getTexture(p.first));
+		buffer.draw(p.second, &Resources::getTexture(p.first));
 	}
+
+	// draw buffer to window
+	buffer.display();
+	sf::Sprite finS(buffer.getTexture());
+	aWindow->draw(finS);
 }
 
 Player::Player()
