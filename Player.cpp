@@ -202,7 +202,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
 		for (unsigned short x = 0; x < gbl::screen::width; ++x)
 		{
-			sf::Vector2i cell(std::floor(floorPos.x), std::floor(floorPos.y));
+			sf::Vector2i cell(floorPos);
 			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
 			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
 
