@@ -4,14 +4,16 @@
 
 int main()
 {
-    Resources::loadTextures({
+    Resources::loadWallTextures({
         "source/textures/wood.png",
         "source/textures/bluestone.png",
         "source/textures/colorstone.png",
         "source/textures/greystone.png", 
         "source/textures/purplestone.png", 
         "source/textures/redbrick.png" });
-
+    Resources::loadSpriteTextures({
+        "source/textures/barrel.png",
+        "source/textures/pillar.png" });
     Resources::loadFloorImage("source/textures/mossy.png");
     Resources::loadCeilImage("source/textures/redbrick.png");
     Resources::loadSkyTexture("source/textures/sky_texture.png");

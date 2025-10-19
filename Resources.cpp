@@ -1,11 +1,12 @@
 #include "Resources.h"
 
-std::vector<std::unique_ptr<sf::Texture>> Resources::textures;
+std::vector<std::unique_ptr<sf::Texture>> Resources::wallTextures;
+std::vector<std::unique_ptr<sf::Texture>> Resources::spriteTextures;
 sf::Image Resources::floorImage;
 sf::Image Resources::ceilImage;
 sf::Texture Resources::skyTexture;
 
-void Resources::loadTextures(const std::vector<std::string>& aFiles)
+void Resources::loadWallTextures(const std::vector<std::string>& aFiles)
 {
 	for (size_t i = 0; i < aFiles.size(); ++i)
 	{
@@ -14,7 +15,20 @@ void Resources::loadTextures(const std::vector<std::string>& aFiles)
 		{
 			throw std::runtime_error("Cannot load texture: " + aFiles[i]);
 		}
-		textures.push_back(std::move(t));
+		wallTextures.push_back(std::move(t));
+	}
+}
+
+void Resources::loadSpriteTextures(const std::vector<std::string>& aFiles)
+{
+	for (size_t i = 0; i < aFiles.size(); ++i)
+	{
+		auto t = std::make_unique<sf::Texture>();
+		if (!t->loadFromFile(aFiles[i]))
+		{
+			throw std::runtime_error("Cannot load texture: " + aFiles[i]);
+		}
+		spriteTextures.push_back(std::move(t));
 	}
 }
 
@@ -42,9 +56,14 @@ void Resources::loadSkyTexture(const std::string& aFile)
 	}
 }
 
-sf::Texture& Resources::getTexture(const size_t aIdx)
+sf::Texture& Resources::getWallTexture(const size_t aIdx)
 {
-	return *textures[aIdx];
+	return *wallTextures[aIdx];
+}
+
+sf::Texture& Resources::getSpriteTexture(const size_t aIdx)
+{
+	return *spriteTextures[aIdx];
 }
 
 sf::Image& Resources::getFloorImage()

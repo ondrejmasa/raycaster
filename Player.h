@@ -6,6 +6,7 @@
 #include "global.h"
 #include "Ray.h"
 #include "Resources.h"
+#include "Sprite.h"
 
 class Player
 {
@@ -18,6 +19,7 @@ private:
 	const float mouseSensitivity = 0.003f;
 	std::vector<Ray> rays;
 	sf::Texture floorTexture;
+	std::vector<Sprite> sprites;
 	const bool checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos) const;
 	void updateInput(const float& aDeltaTime, sf::Window* aWindow);
 	void updateRays();

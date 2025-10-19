@@ -30,6 +30,9 @@
     <ClCompile Include="Resources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Sprite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sprite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,6 +77,12 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="source\textures\sky.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\pillar.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\textures\barrel.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
