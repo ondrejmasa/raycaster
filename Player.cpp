@@ -275,7 +275,6 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	// Sprites
 	for (size_t i = 0; i < sprites.size(); ++i)
 	{
-
 		float spriteX = (sprites[i].position.x) - (position.x / gbl::map::cellSize);
 		float spriteY = (sprites[i].position.y) - (position.y / gbl::map::cellSize);
 		float invDet = 1.0f / (plane.x * direction.y - direction.x * plane.y);
@@ -283,42 +282,30 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		double transY = invDet * (-plane.y * spriteX + plane.x * spriteY);
 		if (transY < 0.f) continue;
 		int spriteScreenX = int((gbl::screen::width / 2.f) * (1 + transX / transY));
-		int spriteHeight = std::min(abs(int(gbl::screen::height / (transY))), 5*int(gbl::screen::height));
+		int spriteHeight = abs(int(gbl::screen::height / (transY)));
 		int drawStartY = -spriteHeight / 2.f + gbl::screen::height / 2.f + pitch;
 		int drawEndY = spriteHeight / 2.f + gbl::screen::height / 2.f + pitch;
 		int spriteWidth = spriteHeight;
 		int drawStartX = -spriteWidth / 2 + spriteScreenX;
 		int drawEndX = spriteWidth / 2 + spriteScreenX;
 		sf::Texture& tex = Resources::getSpriteTexture(sprites[i].texture);
-		sf::Image img = tex.copyToImage();
-		const uint8_t* imgPixs = img.getPixelsPtr();
-		std::unique_ptr<uint8_t[]> spritePixels = std::make_unique<uint8_t[]>(spriteWidth * spriteHeight * 4);
+		sf::VertexArray spriteStripes(sf::PrimitiveType::Lines);
 		for (int stripe = drawStartX; stripe < drawEndX; ++stripe)
 		{
 			if (transY > 0 && stripe > 0 && stripe < gbl::screen::width && (transY * gbl::map::cellSize) < rays[stripe].getLength())
 			{
 				int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * tex.getSize().x / spriteWidth) / 256;
-				for (int y = drawStartY; y < drawEndY; ++y)
-				{
-					int texY = int((y - drawStartY) * img.getSize().y / float(spriteHeight));
-					//sf::Color color = img.getPixel(sf::Vector2u(texX, texY));
-					const uint8_t* pix = imgPixs + (texY * tex.getSize().x + texX) * 4;
-					if (pix[0] != 0 or pix[1] != 0 or pix[2] != 0)
-					{
-						uint8_t* pixelPtr = spritePixels.get() + ((y - drawStartY) * spriteWidth + (stripe - drawStartX)) * 4;
-						pixelPtr[0] = pix[0];
-						pixelPtr[1] = pix[1];
-						pixelPtr[2] = pix[2];
-						pixelPtr[3] = 255;
-					}
-				}
+				sf::Vector2f texStart = sf::Vector2f(texX, 0);
+				sf::Vector2f texEnd = sf::Vector2f(texX, tex.getSize().y);
+				sf::Vector2f vertStart(stripe, drawStartY);
+				sf::Vector2f vertEnd(stripe, drawEndY);
+				sf::Vertex v1{ vertStart, sf::Color::White, texStart };
+				sf::Vertex v2{ vertEnd, sf::Color::White, texEnd };
+				spriteStripes.append(v1);
+				spriteStripes.append(v2);
 			}
 		}
-		sf::Texture spriteTexture{ sf::Vector2u(spriteWidth, spriteHeight) };
-		spriteTexture.update(spritePixels.get());
-		sf::Sprite ss{ spriteTexture };
-		ss.setPosition(sf::Vector2f(drawStartX, drawStartY));
-		buffer.draw(ss);
+		buffer.draw(spriteStripes, &tex);
 	}
 
 
@@ -335,7 +322,8 @@ Player::Player()
 	  rays { gbl::screen::width, Ray{} },
 	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
 	  sprites{
-		  { sf::Vector2f(8.0, 11.0), 0}
+		  { sf::Vector2f(8.0, 11.0), 0},
+		  { sf::Vector2f(10.0, 11.0), 0},
 	  }
 {
 }

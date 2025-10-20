@@ -28,6 +28,9 @@ void Resources::loadSpriteTextures(const std::vector<std::string>& aFiles)
 		{
 			throw std::runtime_error("Cannot load texture: " + aFiles[i]);
 		}
+		sf::Image img = t->copyToImage();
+		img.createMaskFromColor(sf::Color::Black);
+		t->loadFromImage(img);
 		spriteTextures.push_back(std::move(t));
 	}
 }
