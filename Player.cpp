@@ -4,7 +4,7 @@
 
 const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos) const
 {
-	int x; int y;
+	float x; float y;
 	for (unsigned char i = 0; i < 4; ++i)
 	{
 		switch (i)
@@ -26,7 +26,13 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 				y = (aPos.y +  size) / gbl::map::cellSize;
 				break;
 		}
-		if (aMap[y][x] > 0)
+		if (aMap[int(y)][int(x)] > 0)
+			return true;
+	}
+	for (const Sprite& s : sprites)
+	{
+		float d = std::sqrt(std::pow(aPos.x / gbl::map::cellSize - s.position.x, 2) + std::pow(aPos.y / gbl::map::cellSize - s.position.y, 2));
+		if (d < 0.5f)
 			return true;
 	}
 	return false;
@@ -273,22 +279,39 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	}
 
 	// Sprites
+	auto caclSpriteDist =
+		[this](const Sprite& sprite)
+		{
+			return std::pow(position.x / gbl::map::cellSize - sprite.position.x, 2) +
+				std::pow(position.y / gbl::map::cellSize - sprite.position.y, 2);
+		};
+
+	std::sort(sprites.begin(), sprites.end(),
+		[&](const Sprite& a, const Sprite& b)
+		{
+			double distA = caclSpriteDist(a);
+			double distB = caclSpriteDist(b);
+			return distA > distB;
+		});
+
 	for (size_t i = 0; i < sprites.size(); ++i)
 	{
-		float spriteX = (sprites[i].position.x) - (position.x / gbl::map::cellSize);
-		float spriteY = (sprites[i].position.y) - (position.y / gbl::map::cellSize);
+		Sprite& sprite = sprites[i];
+		float spriteX = (sprite.position.x) - (position.x / gbl::map::cellSize);
+		float spriteY = (sprite.position.y) - (position.y / gbl::map::cellSize);
 		float invDet = 1.0f / (plane.x * direction.y - direction.x * plane.y);
 		float transX = invDet * (direction.y * spriteX - direction.x * spriteY);
 		double transY = invDet * (-plane.y * spriteX + plane.x * spriteY);
 		if (transY < 0.f) continue;
 		int spriteScreenX = int((gbl::screen::width / 2.f) * (1 + transX / transY));
-		int spriteHeight = abs(int(gbl::screen::height / (transY)));
-		int drawStartY = -spriteHeight / 2.f + gbl::screen::height / 2.f + pitch;
-		int drawEndY = spriteHeight / 2.f + gbl::screen::height / 2.f + pitch;
-		int spriteWidth = spriteHeight;
+		int spriteSize = abs(int(gbl::screen::height / (transY)));
+		int spriteHeight = spriteSize * sprite.scale;
+		int drawStartY = -spriteHeight + spriteSize/2.f + gbl::screen::height / 2.f + pitch;
+		int drawEndY = spriteSize / 2.f + gbl::screen::height / 2.f + pitch;
+		int spriteWidth = spriteSize * sprite.scale;
 		int drawStartX = -spriteWidth / 2 + spriteScreenX;
 		int drawEndX = spriteWidth / 2 + spriteScreenX;
-		sf::Texture& tex = Resources::getSpriteTexture(sprites[i].texture);
+		sf::Texture& tex = Resources::getSpriteTexture(sprite.texture);
 		sf::VertexArray spriteStripes(sf::PrimitiveType::Lines);
 		for (int stripe = drawStartX; stripe < drawEndX; ++stripe)
 		{
@@ -322,8 +345,8 @@ Player::Player()
 	  rays { gbl::screen::width, Ray{} },
 	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
 	  sprites{
-		  { sf::Vector2f(8.0, 11.0), 0},
-		  { sf::Vector2f(10.0, 11.0), 0},
+		  { sf::Vector2f(8.0, 11.0), 0, 0.8f},
+		  { sf::Vector2f(10.0, 11.0), 0, 1.2f},
 	  }
 {
 }
