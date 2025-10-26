@@ -31,9 +31,16 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 	}
 	for (const Sprite& s : sprites)
 	{
-		float d = std::sqrt(std::pow(aPos.x / gbl::map::cellSize - s.position.x, 2) + std::pow(aPos.y / gbl::map::cellSize - s.position.y, 2));
-		if (d < 0.5f)
+		const sf::Vector2f spriteSize(0.25f, 0.25f);
+		const sf::Vector2f playereSize(0.25f, 0.25f);
+		const sf::Vector2f playerPos = aPos / gbl::map::cellSize;
+		if (playerPos.x + playereSize.x > s.position.x - spriteSize.x and
+			playerPos.x - playereSize.x < s.position.x + spriteSize.x and
+			playerPos.y + playereSize.y > s.position.y - spriteSize.y and
+			playerPos.y - playereSize.y < s.position.y + spriteSize.y)
+		{
 			return true;
+		}
 	}
 	return false;
 }
@@ -82,12 +89,30 @@ void Player::updateInput(const float& aDeltaTime, sf::Window* aWindow)
 	if (p.length() > 0)
 	{
 		p = p.normalized() * speed * aDeltaTime;
-		if (!checkMapCollision(gbl::map::worldMap, position + p))
-			position = position + p;
-		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x + p.x, position.y)))
-			position.x = position.x + p.x;
-		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x, position.y + p.y)))
-			position.y = position.y + p.y;
+
+		sf::Vector2f newPos = position + p;
+		//for (const Sprite& s : sprites)
+		//{
+		//	sf::Vector2f diff = newPos / gbl::map::cellSize - s.position;
+		//	float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+		//	float minDist = 0.65f; // polomìr kolize
+
+		//	if (dist < minDist)
+		//	{
+		//		float overlap = minDist - dist;
+		//		// normalizovaný vektor od spritu k hráèi
+		//		diff /= dist;
+		//		newPos += diff * overlap;  // posun hráèe ven
+		//		std::cout << overlap << '\n';
+		//	}
+		//}
+
+		if (!checkMapCollision(gbl::map::worldMap, newPos))
+			position = newPos;
+		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(newPos.x, position.y)))
+			position.x = newPos.x;
+		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x, newPos.y)))
+			position.y = newPos.y;
 	}
 
 	sf::Mouse::setPosition(center, *aWindow);
@@ -346,7 +371,7 @@ Player::Player()
 	  floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
 	  sprites{
 		  { sf::Vector2f(8.0, 11.0), 0, 0.8f},
-		  { sf::Vector2f(10.0, 11.0), 0, 1.2f},
+		  { sf::Vector2f(10.0, 11.0), 0, 1.f},
 	  }
 {
 }
