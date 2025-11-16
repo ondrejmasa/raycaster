@@ -1,0 +1,238 @@
+#include "Renderer.h"
+
+void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<Sprite>& aSprites)
+{
+	// floor and ceil
+	float horizon = gbl::screen::height / 2.f + aPlayer.pitch;
+	//sky
+	float angle = std::atan2(aPlayer.direction.y, aPlayer.direction.x);
+	if (angle < 0.f)
+		angle += 2 * gbl::PI;
+	float a = angle / (2 * gbl::PI);
+	sf::Texture& skyTex = Resources::getSkyTexture();
+	skyTex.setRepeated(true);
+	constexpr float skyMoveSpeed = 5.f;
+	float texOffX = skyTex.getSize().x * a * skyMoveSpeed;
+	sf::VertexArray sky(sf::PrimitiveType::Triangles);
+	sf::Vertex v1{ sf::Vector2f(0.f, horizon - (float)gbl::screen::height), sf::Color::White,
+					sf::Vector2f(texOffX, 0.f) };
+	sf::Vertex v2{ sf::Vector2f(0.f, horizon), sf::Color::White,
+					sf::Vector2f(texOffX, (float)skyTex.getSize().y) };
+	sf::Vertex v3{ sf::Vector2f((float)gbl::screen::width, horizon), sf::Color::White,
+					sf::Vector2f(texOffX + (float)skyTex.getSize().x , (float)skyTex.getSize().y) };
+	sf::Vertex v4{ sf::Vector2f((float)gbl::screen::width, horizon - (float)gbl::screen::height), sf::Color::White,
+					sf::Vector2f(texOffX + (float)skyTex.getSize().x, 0.f) };
+	sky.append(v1);
+	sky.append(v2);
+	sky.append(v3);
+	sky.append(v1);
+	sky.append(v3);
+	sky.append(v4);
+	//aWindow->draw(sky, &skyTex);
+	buffer.draw(sky, &skyTex);
+	// floor + ceil
+	float posZ = 0.5f * gbl::screen::height;
+	sf::Vector2f rayDirLeft = aPlayer.direction - aPlayer.plane;
+	sf::Vector2f rayDirRight = aPlayer.direction + aPlayer.plane;
+	sf::Image& floorImg = Resources::getFloorImage();
+	sf::Image& ceilImg = Resources::getCeilImage();
+	std::unique_ptr<uint8_t[]> floorPixels = std::make_unique<uint8_t[]>(gbl::screen::width * gbl::screen::height * 4);
+	const uint8_t* floorTexData = floorImg.getPixelsPtr();
+	const uint8_t* ceilTexData = ceilImg.getPixelsPtr();
+	unsigned int texWidth = floorImg.getSize().x;
+	unsigned int texHeight = floorImg.getSize().y;
+	//for (unsigned short y = 0; y < gbl::screen::height; ++y)
+	for (unsigned short y = horizon + 1; y < gbl::screen::height; ++y)
+	{
+		bool isFloor = y > horizon;
+		short p = isFloor ? y - horizon : horizon - y;
+		float rowDist = posZ / p;
+		if (rowDist * gbl::map::cellSize > gbl::map::maxRayLength)
+			continue;
+		sf::Vector2f floorStep = rowDist * (rayDirRight - rayDirLeft) / static_cast<float>(gbl::screen::width);
+		sf::Vector2f floorPos = aPlayer.position + rowDist * rayDirLeft;
+		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
+		for (unsigned short x = 0; x < gbl::screen::width; ++x)
+		{
+			sf::Vector2i cell(floorPos);
+			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
+			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
+
+			float shade = 1 - rowDist * gbl::map::cellSize / gbl::map::maxRayLength;
+			const uint8_t* TexData = isFloor ? floorTexData : ceilTexData;
+			const uint8_t* floorTexPtr = TexData + (ty * texWidth + tx) * 4;
+			rowPtr[0] = uint8_t(float(floorTexPtr[0]) * shade);
+			rowPtr[1] = uint8_t(float(floorTexPtr[1]) * shade);
+			rowPtr[2] = uint8_t(float(floorTexPtr[2]) * shade);
+			rowPtr[3] = 255;
+			rowPtr += 4;
+
+			floorPos += floorStep;
+		}
+	}
+	floorTexture.update(floorPixels.get(), sf::Vector2u(gbl::screen::width, gbl::screen::height), sf::Vector2u(0, 0));
+	sf::Sprite fs{ floorTexture };
+	buffer.draw(fs);
+
+	// walls
+	for (auto& p : lines) {
+		p.second.clear();
+	}
+	for (unsigned short x = 0; x < aRays.size(); ++x)
+	{
+		const Ray& r = aRays[x];
+		if (!r.isHit) continue;
+		float lineH = gbl::screen::height / r.length * gbl::map::cellSize;
+		float s = (gbl::screen::height - lineH) / 2 + aPlayer.pitch;
+		float e = (gbl::screen::height + lineH) / 2 + aPlayer.pitch;
+		auto& tex = Resources::getWallTexture(r.wallHit - 1);
+		double wallX;
+		if (r.isHitVertical)
+			wallX = r.positon.y + r.length * r.direction.y;
+		else
+			wallX = r.positon.x + r.length * r.direction.x;
+		wallX -= floor(wallX / gbl::map::cellSize) * gbl::map::cellSize;
+
+		int texX = wallX / gbl::map::cellSize * tex.getSize().x;
+
+		if ((r.isHitVertical and r.direction.x < 0) or (!r.isHitVertical && r.direction.y > 0))
+		{
+			texX = tex.getSize().x - texX - 1;
+		}
+		double step = 64.0 / lineH;
+		double texPos = (s - (gbl::screen::height - lineH) / 2 - aPlayer.pitch);
+
+		float brightness = 1.f - r.length / gbl::map::maxRayLength;
+		if (r.isHitVertical) brightness *= 0.7f;
+		sf::Color c(255 * brightness, 255 * brightness, 255 * brightness);
+		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c, sf::Vector2f(texX, 0.f) };
+		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c, sf::Vector2f(texX, tex.getSize().y) };
+
+		sf::VertexArray& va = lines[r.wallHit - 1];
+		if (va.getPrimitiveType() == sf::PrimitiveType::Points)
+		{
+			va.setPrimitiveType(sf::PrimitiveType::Lines);
+		}
+		va.append(v1);
+		va.append(v2);
+	}
+	for (auto& p : lines)
+	{
+		buffer.draw(p.second, &Resources::getWallTexture(p.first));
+	}
+
+	// Sprites
+	auto caclSpriteDist =
+		[aPlayer](const Sprite& sprite)
+		{
+			return std::pow(aPlayer.position.x - sprite.position.x, 2) +
+				std::pow(aPlayer.position.y - sprite.position.y, 2);
+		};
+
+	std::sort(aSprites.begin(), aSprites.end(),
+		[&](const Sprite& a, const Sprite& b)
+		{
+			double distA = caclSpriteDist(a);
+			double distB = caclSpriteDist(b);
+			return distA > distB;
+		});
+
+	for (size_t i = 0; i < aSprites.size(); ++i)
+	{
+		const Sprite& sprite = aSprites[i];
+		float spriteX = sprite.position.x - aPlayer.position.x;
+		float spriteY = sprite.position.y - aPlayer.position.y;
+		float invDet = 1.0f / (aPlayer.plane.x * aPlayer.direction.y - aPlayer.direction.x * aPlayer.plane.y);
+		float transX = invDet * (aPlayer.direction.y * spriteX - aPlayer.direction.x * spriteY);
+		double transY = invDet * (-aPlayer.plane.y * spriteX + aPlayer.plane.x * spriteY);
+		if (transY < 0.f) continue;
+		int spriteScreenX = int((gbl::screen::width / 2.f) * (1 + transX / transY));
+		int spriteSize = abs(int(gbl::screen::height / (transY)));
+		int spriteHeight = spriteSize * sprite.scale;
+		int drawStartY = -spriteHeight + spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch;
+		int drawEndY = spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch;
+		int spriteWidth = spriteSize * sprite.scale;
+		int drawStartX = -spriteWidth / 2 + spriteScreenX;
+		int drawEndX = spriteWidth / 2 + spriteScreenX;
+		sf::Texture& tex = Resources::getSpriteTexture(sprite.texture);
+		spriteStripes.clear();
+		for (int stripe = drawStartX; stripe < drawEndX; ++stripe)
+		{
+			if (transY > 0 && stripe > 0 && stripe < gbl::screen::width && (transY * gbl::map::cellSize) < aRays[stripe].length)
+			{
+				int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * tex.getSize().x / spriteWidth) / 256;
+				sf::Vector2f texStart = sf::Vector2f(texX, 0);
+				sf::Vector2f texEnd = sf::Vector2f(texX, tex.getSize().y);
+				sf::Vector2f vertStart(stripe, drawStartY);
+				sf::Vector2f vertEnd(stripe, drawEndY);
+				sf::Vertex v1{ vertStart, sf::Color::White, texStart };
+				sf::Vertex v2{ vertEnd, sf::Color::White, texEnd };
+				spriteStripes.append(v1);
+				spriteStripes.append(v2);
+			}
+		}
+		buffer.draw(spriteStripes, &tex);
+	}
+
+	// draw buffer to window
+	buffer.display();
+	sf::Sprite finS(buffer.getTexture());
+	aWindow->draw(finS);
+}
+
+void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const float aScale)
+{
+	//constexpr float scale = 0.2f;
+	constexpr float a = std::min(static_cast<float>(gbl::screen::height), static_cast<float>(gbl::screen::width));
+	sf::RectangleShape rBase(aScale * sf::Vector2f(static_cast<float>(gbl::map::columns * gbl::map::cellSize), static_cast<float>(gbl::map::rows * gbl::map::cellSize)));
+	aWindow->draw(rBase);
+	sf::VertexArray cells(sf::PrimitiveType::Triangles);
+	for (size_t i = 0; i < gbl::map::rows; ++i)
+	{
+		for (size_t j = 0; j < gbl::map::columns; ++j)
+		{
+			float x = aScale * (j * gbl::map::cellSize);
+			float y = aScale * (i * gbl::map::cellSize);
+			float s = aScale * gbl::map::cellSize;
+			sf::Vector2f p0(x, y);
+			sf::Vector2f p1(x + s, y);
+			sf::Vector2f p2(x + s, y + s);
+			sf::Vector2f p3(x, y + s);
+			sf::Color c = (gbl::map::worldMap[i][j] > 0)
+				? sf::Color::Red
+				: sf::Color::White;
+			cells.append({ p0, c });
+			cells.append({ p1, c });
+			cells.append({ p2, c });
+			cells.append({ p0, c });
+			cells.append({ p2, c });
+			cells.append({ p3, c });
+		}
+	}
+	aWindow->draw(cells);
+	sf::CircleShape c(aScale * aPlayer.size / 2);
+	c.setFillColor(sf::Color::Green);
+	c.setPosition(aScale * aPlayer.position * gbl::map::cellSize);
+	aWindow->draw(c);
+
+	sf::VertexArray lines(sf::PrimitiveType::Lines);
+	for (int x = 0; x < gbl::screen::width; x += 20)
+	{
+		const Ray& r = aRays[x];
+		if (!r.isHit) continue;
+		float l = r.length * aScale;
+		sf::Vertex v1{ r.positon * aScale, sf::Color::Blue };
+		sf::Vertex v2{ r.positon * aScale + l * r.direction, sf::Color::Blue };
+		lines.append(v1);
+		lines.append(v2);
+	}
+	aWindow->draw(lines);
+}
+
+Renderer::Renderer()
+	: floorTexture(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
+	  buffer(sf::Vector2u(gbl::screen::width, gbl::screen::height)),
+	  spriteStripes(sf::PrimitiveType::Lines)
+{
+
+}

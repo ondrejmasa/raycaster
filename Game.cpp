@@ -37,6 +37,17 @@ void Game::updateFPS()
 	}
 }
 
+void Game::updateRays()
+{
+	for (unsigned short i = 0; i < rays.size(); ++i)
+	{
+		sf::Vector2f pc = player.position * gbl::map::cellSize + sf::Vector2f(player.size / 2, player.size / 2);
+		float cameraX = 2 * i / float(gbl::screen::width) - 1;
+		sf::Vector2f rayDir(player.direction + player.plane * cameraX);
+		rays[i].cast(pc, rayDir);
+	}
+}
+
 void Game::run()
 {
 	while (window->isOpen())
@@ -50,19 +61,26 @@ void Game::update()
 {
 	updateFPS();
 	pollEvents();
-	player.update(deltaTime, window);
+	player.updateInput(deltaTime, window, sprites);
+	updateRays();
 }
 
 void Game::render()
 {
 	window->clear();
 
-	player.render(window);
+	renderer.renderWorld(window, rays, player, sprites);
+	renderer.renderMap(window, rays, player, 0.2);
 
 	window->display();
 }
 
 Game::Game()
+	: rays{ gbl::screen::width, Ray{} },
+	  sprites{
+		{ sf::Vector2f(8.0, 11.0), 0, 0.8f},
+		{ sf::Vector2f(10.0, 11.0), 0, 1.f},
+	  }
 {
 	initWindow();
 }
