@@ -11,7 +11,7 @@
 class Player
 {
 private:
-	const float speed = 100.f;
+	const float speed = 3.5f;
 	sf::Vector2f position;
 	sf::Vector2f direction;
 	sf::Vector2f plane;

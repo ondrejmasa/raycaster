@@ -10,20 +10,20 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 		switch (i)
 		{
 			case 0:
-				x = aPos.x  / gbl::map::cellSize;
-				y = aPos.y / gbl::map::cellSize;
+				x = aPos.x;
+				y = aPos.y;
 				break;
 			case 1:
-				x = aPos.x / gbl::map::cellSize;
-				y = (aPos.y + size) / gbl::map::cellSize;
+				x = aPos.x;
+				y = (aPos.y + size / gbl::map::cellSize);
 				break;
 			case 2:
-				x = (aPos.x + size) / gbl::map::cellSize;
-				y = aPos.y / gbl::map::cellSize;
+				x = (aPos.x + size / gbl::map::cellSize);
+				y = aPos.y ;
 				break;
 			case 3:
-				x = (aPos.x +  size) / gbl::map::cellSize;
-				y = (aPos.y +  size) / gbl::map::cellSize;
+				x = (aPos.x +  size / gbl::map::cellSize);
+				y = (aPos.y +  size / gbl::map::cellSize);
 				break;
 		}
 		if (aMap[int(y)][int(x)] > 0)
@@ -33,11 +33,10 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 	{
 		const sf::Vector2f spriteSize(0.25f, 0.25f);
 		const sf::Vector2f playereSize(0.25f, 0.25f);
-		const sf::Vector2f playerPos = aPos / gbl::map::cellSize;
-		if (playerPos.x + playereSize.x > s.position.x - spriteSize.x and
-			playerPos.x - playereSize.x < s.position.x + spriteSize.x and
-			playerPos.y + playereSize.y > s.position.y - spriteSize.y and
-			playerPos.y - playereSize.y < s.position.y + spriteSize.y)
+		if (aPos.x + playereSize.x > s.position.x - spriteSize.x and
+			aPos.x - playereSize.x < s.position.x + spriteSize.x and
+			aPos.y + playereSize.y > s.position.y - spriteSize.y and
+			aPos.y - playereSize.y < s.position.y + spriteSize.y)
 		{
 			return true;
 		}
@@ -91,22 +90,6 @@ void Player::updateInput(const float& aDeltaTime, sf::Window* aWindow)
 		p = p.normalized() * speed * aDeltaTime;
 
 		sf::Vector2f newPos = position + p;
-		//for (const Sprite& s : sprites)
-		//{
-		//	sf::Vector2f diff = newPos / gbl::map::cellSize - s.position;
-		//	float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-		//	float minDist = 0.65f; // polomìr kolize
-
-		//	if (dist < minDist)
-		//	{
-		//		float overlap = minDist - dist;
-		//		// normalizovaný vektor od spritu k hráèi
-		//		diff /= dist;
-		//		newPos += diff * overlap;  // posun hráèe ven
-		//		std::cout << overlap << '\n';
-		//	}
-		//}
-
 		if (!checkMapCollision(gbl::map::worldMap, newPos))
 			position = newPos;
 		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(newPos.x, position.y)))
@@ -122,7 +105,7 @@ void Player::updateRays()
 {
 	for (unsigned short i = 0; i < rays.size(); ++i)
 	{
-		sf::Vector2f pc = position + sf::Vector2f(size / 2, size / 2);
+		sf::Vector2f pc = position * gbl::map::cellSize + sf::Vector2f(size / 2, size / 2);
 		float cameraX = 2 * i / float(gbl::screen::width) - 1;
 		sf::Vector2f rayDir(direction + plane * cameraX);
 		rays[i].cast(pc, rayDir);
@@ -161,7 +144,7 @@ void Player::renderMap(sf::RenderTarget* aWindow)
 	aWindow->draw(cells);
 	sf::CircleShape c(scale * size / 2);
 	c.setFillColor(sf::Color::Green);
-	c.setPosition(scale * position);
+	c.setPosition(scale * position * gbl::map::cellSize);
 	aWindow->draw(c);
 
 	sf::VertexArray lines(sf::PrimitiveType::Lines);
@@ -229,7 +212,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 		if (rowDist * gbl::map::cellSize > gbl::map::maxRayLength)
 			continue;
 		sf::Vector2f floorStep = rowDist * (rayDirRight - rayDirLeft) / static_cast<float>(gbl::screen::width);
-		sf::Vector2f floorPos = position / gbl::map::cellSize + rowDist * rayDirLeft;
+		sf::Vector2f floorPos = position + rowDist * rayDirLeft;
 		uint8_t* rowPtr = floorPixels.get() + y * gbl::screen::width * 4;
 		for (unsigned short x = 0; x < gbl::screen::width; ++x)
 		{
@@ -307,8 +290,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	auto caclSpriteDist =
 		[this](const Sprite& sprite)
 		{
-			return std::pow(position.x / gbl::map::cellSize - sprite.position.x, 2) +
-				std::pow(position.y / gbl::map::cellSize - sprite.position.y, 2);
+			return std::pow(position.x - sprite.position.x, 2) +
+				std::pow(position.y - sprite.position.y, 2);
 		};
 
 	std::sort(sprites.begin(), sprites.end(),
@@ -322,8 +305,8 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 	for (size_t i = 0; i < sprites.size(); ++i)
 	{
 		Sprite& sprite = sprites[i];
-		float spriteX = (sprite.position.x) - (position.x / gbl::map::cellSize);
-		float spriteY = (sprite.position.y) - (position.y / gbl::map::cellSize);
+		float spriteX = sprite.position.x - position.x;
+		float spriteY = sprite.position.y - position.y;
 		float invDet = 1.0f / (plane.x * direction.y - direction.x * plane.y);
 		float transX = invDet * (direction.y * spriteX - direction.x * spriteY);
 		double transY = invDet * (-plane.y * spriteX + plane.x * spriteY);
@@ -364,7 +347,7 @@ void Player::renderWorld(sf::RenderTarget* aWindow)
 }
 
 Player::Player()
-	: position(250.f, 250.f),
+	: position(8.5f, 9.5f),
 	  direction(1.f, 0.f),
 	  plane(0.f, 0.66f),
 	  rays { gbl::screen::width, Ray{} },
