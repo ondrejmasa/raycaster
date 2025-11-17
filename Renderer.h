@@ -18,7 +18,7 @@ private:
 
 public:
 	void renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<Sprite>& aSprites);
-	void renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const float aScale);
+	void renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const std::vector<std::vector<int>>& aGrid, const float aScale);
 	Renderer();
 };
 

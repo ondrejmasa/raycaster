@@ -47,7 +47,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 		bool isFloor = y > horizon;
 		short p = isFloor ? y - horizon : horizon - y;
 		float rowDist = posZ / p;
-		if (rowDist * gbl::map::cellSize > gbl::map::maxRayLength)
+		if (rowDist > gbl::map::maxRayLength)
 			continue;
 		sf::Vector2f floorStep = rowDist * (rayDirRight - rayDirLeft) / static_cast<float>(gbl::screen::width);
 		sf::Vector2f floorPos = aPlayer.position + rowDist * rayDirLeft;
@@ -58,7 +58,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 			unsigned  tx = unsigned((floorPos.x - cell.x) * texWidth) & (texWidth - 1);
 			unsigned  ty = unsigned((floorPos.y - cell.y) * texHeight) & (texHeight - 1);
 
-			float shade = 1 - rowDist * gbl::map::cellSize / gbl::map::maxRayLength;
+			float shade = 1 - rowDist / gbl::map::maxRayLength;
 			const uint8_t* TexData = isFloor ? floorTexData : ceilTexData;
 			const uint8_t* floorTexPtr = TexData + (ty * texWidth + tx) * 4;
 			rowPtr[0] = uint8_t(float(floorTexPtr[0]) * shade);
@@ -82,18 +82,18 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 	{
 		const Ray& r = aRays[x];
 		if (!r.isHit) continue;
-		float lineH = gbl::screen::height / r.length * gbl::map::cellSize;
+		float lineH = gbl::screen::height / r.length;
 		float s = (gbl::screen::height - lineH) / 2 + aPlayer.pitch;
 		float e = (gbl::screen::height + lineH) / 2 + aPlayer.pitch;
 		auto& tex = Resources::getWallTexture(r.wallHit - 1);
 		double wallX;
 		if (r.isHitVertical)
-			wallX = r.positon.y + r.length * r.direction.y;
+			wallX = aPlayer.position.y + r.length * r.direction.y;
 		else
-			wallX = r.positon.x + r.length * r.direction.x;
-		wallX -= floor(wallX / gbl::map::cellSize) * gbl::map::cellSize;
+			wallX = aPlayer.position.x + r.length * r.direction.x;
+		wallX -= floor(wallX);
 
-		int texX = wallX / gbl::map::cellSize * tex.getSize().x;
+		int texX = wallX * tex.getSize().x;
 
 		if ((r.isHitVertical and r.direction.x < 0) or (!r.isHitVertical && r.direction.y > 0))
 		{
@@ -158,7 +158,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 		spriteStripes.clear();
 		for (int stripe = drawStartX; stripe < drawEndX; ++stripe)
 		{
-			if (transY > 0 && stripe > 0 && stripe < gbl::screen::width && (transY * gbl::map::cellSize) < aRays[stripe].length)
+			if (transY > 0 && stripe > 0 && stripe < gbl::screen::width && (transY) < aRays[stripe].length)
 			{
 				int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * tex.getSize().x / spriteWidth) / 256;
 				sf::Vector2f texStart = sf::Vector2f(texX, 0);
@@ -180,25 +180,27 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 	aWindow->draw(finS);
 }
 
-void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const float aScale)
+void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const std::vector<std::vector<int>>& aGrid, const float aScale)
 {
-	//constexpr float scale = 0.2f;
 	constexpr float a = std::min(static_cast<float>(gbl::screen::height), static_cast<float>(gbl::screen::width));
-	sf::RectangleShape rBase(aScale * sf::Vector2f(static_cast<float>(gbl::map::columns * gbl::map::cellSize), static_cast<float>(gbl::map::rows * gbl::map::cellSize)));
+	const size_t r = aGrid.size();
+	const size_t c = r != 0u ? aGrid[0].size() : 0u;
+	const float cellSize = static_cast<float>(std::min(gbl::screen::height, gbl::screen::width)) / static_cast<float>(r);
+	sf::RectangleShape rBase(aScale * sf::Vector2f(static_cast<float>(c * cellSize), static_cast<float>(r * cellSize)));
 	aWindow->draw(rBase);
 	sf::VertexArray cells(sf::PrimitiveType::Triangles);
-	for (size_t i = 0; i < gbl::map::rows; ++i)
+	for (size_t i = 0; i < r; ++i)
 	{
-		for (size_t j = 0; j < gbl::map::columns; ++j)
+		for (size_t j = 0; j < c; ++j)
 		{
-			float x = aScale * (j * gbl::map::cellSize);
-			float y = aScale * (i * gbl::map::cellSize);
-			float s = aScale * gbl::map::cellSize;
+			float x = aScale * (j * cellSize);
+			float y = aScale * (i * cellSize);
+			float s = aScale * cellSize;
 			sf::Vector2f p0(x, y);
 			sf::Vector2f p1(x + s, y);
 			sf::Vector2f p2(x + s, y + s);
 			sf::Vector2f p3(x, y + s);
-			sf::Color c = (gbl::map::worldMap[i][j] > 0)
+			sf::Color c = (aGrid[i][j] > 0)
 				? sf::Color::Red
 				: sf::Color::White;
 			cells.append({ p0, c });
@@ -210,19 +212,19 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 		}
 	}
 	aWindow->draw(cells);
-	sf::CircleShape c(aScale * aPlayer.size / 2);
-	c.setFillColor(sf::Color::Green);
-	c.setPosition(aScale * aPlayer.position * gbl::map::cellSize);
-	aWindow->draw(c);
+	sf::CircleShape p(aScale * (aPlayer.size / 2) * cellSize);
+	p.setFillColor(sf::Color::Green);
+	p.setPosition(aScale * aPlayer.position * cellSize);
+	aWindow->draw(p);
 
 	sf::VertexArray lines(sf::PrimitiveType::Lines);
 	for (int x = 0; x < gbl::screen::width; x += 20)
 	{
 		const Ray& r = aRays[x];
 		if (!r.isHit) continue;
-		float l = r.length * aScale;
-		sf::Vertex v1{ r.positon * aScale, sf::Color::Blue };
-		sf::Vertex v2{ r.positon * aScale + l * r.direction, sf::Color::Blue };
+		float l = r.length * aScale * cellSize;
+		sf::Vertex v1{ aPlayer.position * aScale * cellSize, sf::Color::Blue };
+		sf::Vertex v2{ aPlayer.position * aScale * cellSize + l * r.direction, sf::Color::Blue };
 		lines.append(v1);
 		lines.append(v2);
 	}

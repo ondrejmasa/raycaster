@@ -2,7 +2,7 @@
 
 
 
-const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Vector2f& aPos, const std::vector<Sprite>& aSprites) const
+const bool Player::checkMapCollision(const sf::Vector2f& aPos, const Level& level) const
 {
 	float x; float y;
 	for (unsigned char i = 0; i < 4; ++i)
@@ -15,21 +15,21 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 				break;
 			case 1:
 				x = aPos.x;
-				y = (aPos.y + size / gbl::map::cellSize);
+				y = (aPos.y + size);
 				break;
 			case 2:
-				x = (aPos.x + size / gbl::map::cellSize);
+				x = (aPos.x + size);
 				y = aPos.y ;
 				break;
 			case 3:
-				x = (aPos.x +  size / gbl::map::cellSize);
-				y = (aPos.y +  size / gbl::map::cellSize);
+				x = (aPos.x +  size);
+				y = (aPos.y +  size);
 				break;
 		}
-		if (aMap[int(y)][int(x)] > 0)
+		if (level.grid[int(y)][int(x)] > 0)
 			return true;
 	}
-	for (const Sprite& s : aSprites)
+	for (const Sprite& s : level.sprites)
 	{
 		const sf::Vector2f spriteSize(0.25f, 0.25f);
 		const sf::Vector2f playereSize(0.25f, 0.25f);
@@ -44,7 +44,7 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 	return false;
 }
 
-void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta, const std::vector<Sprite>& aSprites)
+void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta, const Level& aLevel)
 {
 	// rotation
 	float rotSpeed = 0.f;
@@ -85,11 +85,11 @@ void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta
 		p = p.normalized() * speed * aDeltaTime;
 
 		sf::Vector2f newPos = position + p;
-		if (!checkMapCollision(gbl::map::worldMap, newPos, aSprites))
+		if (!checkMapCollision(newPos, aLevel))
 			position = newPos;
-		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(newPos.x, position.y), aSprites))
+		else if (!checkMapCollision(sf::Vector2f(newPos.x, position.y), aLevel))
 			position.x = newPos.x;
-		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x, newPos.y), aSprites))
+		else if (!checkMapCollision(sf::Vector2f(position.x, newPos.y), aLevel))
 			position.y = newPos.y;
 	}
 }

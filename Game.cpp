@@ -46,10 +46,10 @@ void Game::updateRays()
 {
 	for (unsigned short i = 0; i < rays.size(); ++i)
 	{
-		sf::Vector2f pc = player.position * gbl::map::cellSize + sf::Vector2f(player.size / 2, player.size / 2);
+		sf::Vector2f pc = player.position + sf::Vector2f(player.size / 2, player.size / 2);
 		float cameraX = 2 * i / float(gbl::screen::width) - 1;
 		sf::Vector2f rayDir(player.direction + player.plane * cameraX);
-		rays[i].cast(pc, rayDir);
+		rays[i].cast(pc, rayDir, level.grid);
 	}
 }
 
@@ -71,7 +71,7 @@ void Game::update()
 	window->setMouseCursorVisible(!isGamePaused);
 	if (isGamePaused)
 	{
-		player.updateInput(deltaTime, md, sprites);
+		player.updateInput(deltaTime, md, level);
 		sf::Mouse::setPosition(center, *window);
 	}
 	updateRays();
@@ -82,7 +82,7 @@ void Game::render()
 	window->clear();
 
 	renderer.renderWorld(window, rays, player, sprites);
-	renderer.renderMap(window, rays, player, 0.2);
+	renderer.renderMap(window, rays, player,level.grid, 0.2);
 
 	window->display();
 }
