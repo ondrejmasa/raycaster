@@ -17,6 +17,8 @@ private:
 	Renderer renderer;
 	std::vector<Ray> rays;
 	std::vector<Sprite> sprites;
+	bool isGamePaused = true;
+	const sf::Vector2i center = sf::Vector2i(gbl::screen::width / 2, gbl::screen::height / 2);
 
 	void initWindow();
 	void pollEvents();

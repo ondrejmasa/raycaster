@@ -21,6 +21,6 @@ public:
 	float pitch = 0.f;
 	const float size = 10.f;
 	Player();
-	void updateInput(const float aDeltaTime, sf::Window* aWindow, const std::vector<Sprite>& aSprites);
+	void updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta, const std::vector<Sprite>& aSprites);
 };
 

@@ -4,7 +4,6 @@
 void Game::initWindow()
 {
 	window = new sf::RenderWindow(sf::VideoMode(sf::Vector2u(gbl::screen::width, gbl::screen::height)), "Game 3", sf::Style::Close | sf::Style::Titlebar);
-	window->setMouseCursorVisible(false);
 }
 
 void Game::pollEvents()
@@ -18,6 +17,12 @@ void Game::pollEvents()
 		{
 			if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
 				window->close();
+
+			else if (keyPressed->scancode == sf::Keyboard::Scancode::LShift)
+			{
+				isGamePaused = !isGamePaused;
+				sf::Mouse::setPosition(center, *window);
+			}
 		}
 	}
 }
@@ -61,7 +66,14 @@ void Game::update()
 {
 	updateFPS();
 	pollEvents();
-	player.updateInput(deltaTime, window, sprites);
+	const sf::Vector2i mp = sf::Mouse::getPosition(*window);
+	const sf::Vector2i md = mp - center;
+	window->setMouseCursorVisible(!isGamePaused);
+	if (isGamePaused)
+	{
+		player.updateInput(deltaTime, md, sprites);
+		sf::Mouse::setPosition(center, *window);
+	}
 	updateRays();
 }
 

@@ -44,18 +44,13 @@ const bool Player::checkMapCollision(const gbl::map::MapType& aMap, const sf::Ve
 	return false;
 }
 
-void Player::updateInput(const float aDeltaTime, sf::Window* aWindow, const std::vector<Sprite>& aSprites)
+void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta, const std::vector<Sprite>& aSprites)
 {
-	sf::Vector2i center(gbl::screen::width / 2, gbl::screen::height / 2);
-	sf::Vector2i mousePos = sf::Mouse::getPosition(*aWindow);
-	int dx = mousePos.x - center.x;
-	int dy = mousePos.y - center.y;
-
 	// rotation
 	float rotSpeed = 0.f;
 	float oldDirX = direction.x;
 	float oldPlaneX = plane.x;
-	rotSpeed = dx * mouseSensitivity;
+	rotSpeed = aMouseDelta.x * mouseSensitivity;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Right))
 		rotSpeed = aDeltaTime * 3.f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Left))
@@ -66,7 +61,7 @@ void Player::updateInput(const float aDeltaTime, sf::Window* aWindow, const std:
 	plane.y = oldPlaneX * sin(rotSpeed) + plane.y * cos(rotSpeed);
 
 	// vertical movement
-	pitch -= 1.3f*dy;
+	pitch -= 1.3f* aMouseDelta.y;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down)) pitch -= aDeltaTime * 200.f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) pitch += aDeltaTime * 200.f;
 	pitch = std::min(std::max(pitch, -gbl::screen::height / 2.f ), gbl::screen::height / 2.f );
@@ -97,8 +92,6 @@ void Player::updateInput(const float aDeltaTime, sf::Window* aWindow, const std:
 		else if (!checkMapCollision(gbl::map::worldMap, sf::Vector2f(position.x, newPos.y), aSprites))
 			position.y = newPos.y;
 	}
-
-	sf::Mouse::setPosition(center, *aWindow);
 }
 
 Player::Player()
