@@ -7,8 +7,8 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 	//sky
 	float angle = std::atan2(aPlayer.direction.y, aPlayer.direction.x);
 	if (angle < 0.f)
-		angle += 2 * gbl::PI;
-	float a = angle / (2 * gbl::PI);
+		angle += static_cast<float>(2 * gbl::PI);
+	float a = static_cast<float>(angle / (2 * gbl::PI));
 	sf::Texture& skyTex = Resources::getSkyTexture();
 	skyTex.setRepeated(true);
 	constexpr float skyMoveSpeed = 5.f;
@@ -42,10 +42,10 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 	unsigned int texWidth = floorImg.getSize().x;
 	unsigned int texHeight = floorImg.getSize().y;
 	//for (unsigned short y = 0; y < gbl::screen::height; ++y)
-	for (unsigned short y = horizon + 1; y < gbl::screen::height; ++y)
+	for (unsigned short y = static_cast<unsigned short>(horizon)+1; y < gbl::screen::height; ++y)
 	{
 		bool isFloor = y > horizon;
-		short p = isFloor ? y - horizon : horizon - y;
+		float p = isFloor ? y - horizon : horizon - y;
 		float rowDist = posZ / p;
 		if (rowDist > gbl::map::maxRayLength)
 			continue;
@@ -93,7 +93,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 			wallX = aPlayer.position.x + r.length * r.direction.x;
 		wallX -= floor(wallX);
 
-		int texX = wallX * tex.getSize().x;
+		int texX = static_cast<int>(wallX * tex.getSize().x);
 
 		if ((r.isHitVertical and r.direction.x < 0) or (!r.isHitVertical && r.direction.y > 0))
 		{
@@ -104,9 +104,10 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 
 		float brightness = 1.f - r.length / gbl::map::maxRayLength;
 		if (r.isHitVertical) brightness *= 0.7f;
-		sf::Color c(255 * brightness, 255 * brightness, 255 * brightness);
-		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c, sf::Vector2f(texX, 0.f) };
-		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c, sf::Vector2f(texX, tex.getSize().y) };
+		std::uint8_t shade = static_cast<uint8_t>(255.f * brightness);
+		sf::Color c(shade, shade, shade);
+		sf::Vertex v1{ sf::Vector2f(static_cast<float>(x), s), c, sf::Vector2f(static_cast<float>(texX), 0.f) };
+		sf::Vertex v2{ sf::Vector2f(static_cast<float>(x), e), c, sf::Vector2f(static_cast<float>(texX),static_cast<float>(tex.getSize().y)) };
 
 		sf::VertexArray& va = lines[r.wallHit - 1];
 		if (va.getPrimitiveType() == sf::PrimitiveType::Points)
@@ -144,14 +145,14 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 		float spriteY = sprite.position.y - aPlayer.position.y;
 		float invDet = 1.0f / (aPlayer.plane.x * aPlayer.direction.y - aPlayer.direction.x * aPlayer.plane.y);
 		float transX = invDet * (aPlayer.direction.y * spriteX - aPlayer.direction.x * spriteY);
-		double transY = invDet * (-aPlayer.plane.y * spriteX + aPlayer.plane.x * spriteY);
+		float transY = invDet * (-aPlayer.plane.y * spriteX + aPlayer.plane.x * spriteY);
 		if (transY < 0.f) continue;
 		int spriteScreenX = int((gbl::screen::width / 2.f) * (1 + transX / transY));
 		int spriteSize = abs(int(gbl::screen::height / (transY)));
-		int spriteHeight = spriteSize * sprite.scale;
-		int drawStartY = -spriteHeight + spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch;
-		int drawEndY = spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch;
-		int spriteWidth = spriteSize * sprite.scale;
+		int spriteHeight = static_cast<int>(spriteSize * sprite.scale);
+		int drawStartY = static_cast<int>(-spriteHeight + spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch);
+		int drawEndY = static_cast<int>(spriteSize / 2.f + gbl::screen::height / 2.f + aPlayer.pitch);
+		int spriteWidth = static_cast<int>(spriteSize * sprite.scale);
 		int drawStartX = -spriteWidth / 2 + spriteScreenX;
 		int drawEndX = spriteWidth / 2 + spriteScreenX;
 		sf::Texture& tex = Resources::getSpriteTexture(sprite.texture);
@@ -161,12 +162,12 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 			if (transY > 0 && stripe > 0 && stripe < gbl::screen::width && (transY) < aRays[stripe].length)
 			{
 				int texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * tex.getSize().x / spriteWidth) / 256;
-				sf::Vector2f texStart = sf::Vector2f(texX, 0);
-				sf::Vector2f texEnd = sf::Vector2f(texX, tex.getSize().y);
-				sf::Vector2f vertStart(stripe, drawStartY);
-				sf::Vector2f vertEnd(stripe, drawEndY);
-				sf::Vertex v1{ vertStart, sf::Color::White, texStart };
-				sf::Vertex v2{ vertEnd, sf::Color::White, texEnd };
+				sf::Vector2i texStart(texX, 0);
+				sf::Vector2i texEnd(texX, tex.getSize().y);
+				sf::Vector2i vertStart(stripe, drawStartY);
+				sf::Vector2i vertEnd(stripe, drawEndY);
+				sf::Vertex v1{ static_cast<sf::Vector2f>(vertStart), sf::Color::White, static_cast<sf::Vector2f>(texStart) };
+				sf::Vertex v2{ static_cast<sf::Vector2f>(vertEnd), sf::Color::White, static_cast<sf::Vector2f>(texEnd) };
 				spriteStripes.append(v1);
 				spriteStripes.append(v2);
 			}

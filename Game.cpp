@@ -82,7 +82,7 @@ void Game::render()
 	window->clear();
 
 	renderer.renderWorld(window, rays, player, sprites);
-	renderer.renderMap(window, rays, player,level.grid, 0.2);
+	renderer.renderMap(window, rays, player,level.grid, 0.2f);
 
 	window->display();
 }
