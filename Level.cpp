@@ -55,7 +55,6 @@ const bool Level::checkCollision(const sf::Vector2f& aPos, const float aSize) co
 				continue;
 			for (const Sprite* s : spriteGrid[cy][cx])
 			{
-				const sf::Vector2f spriteSize(0.25f, 0.25f);
 				if (std::abs(aPos.x - s->position.x) < (aSize + s->size) and
 					std::abs(aPos.y - s->position.y) < (aSize + s->size))
 				{
