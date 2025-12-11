@@ -1,49 +1,6 @@
 #include "Player.h"
 
 
-
-const bool Player::checkMapCollision(const sf::Vector2f& aPos, const Level& level) const
-{
-	float x; float y;
-	for (unsigned char i = 0; i < 4; ++i)
-	{
-		switch (i)
-		{
-			case 0:
-				x = aPos.x;
-				y = aPos.y;
-				break;
-			case 1:
-				x = aPos.x;
-				y = (aPos.y + size);
-				break;
-			case 2:
-				x = (aPos.x + size);
-				y = aPos.y ;
-				break;
-			case 3:
-				x = (aPos.x +  size);
-				y = (aPos.y +  size);
-				break;
-		}
-		if (level.grid[int(y)][int(x)] > 0)
-			return true;
-	}
-	for (const Sprite& s : level.sprites)
-	{
-		const sf::Vector2f spriteSize(0.25f, 0.25f);
-		const sf::Vector2f playereSize(0.25f, 0.25f);
-		if (aPos.x + playereSize.x > s.position.x - spriteSize.x and
-			aPos.x - playereSize.x < s.position.x + spriteSize.x and
-			aPos.y + playereSize.y > s.position.y - spriteSize.y and
-			aPos.y - playereSize.y < s.position.y + spriteSize.y)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta, const Level& aLevel)
 {
 	// rotation
@@ -85,11 +42,11 @@ void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta
 		p = p.normalized() * speed * aDeltaTime;
 
 		sf::Vector2f newPos = position + p;
-		if (!checkMapCollision(newPos, aLevel))
+		if (!aLevel.checkCollision(newPos, size))
 			position = newPos;
-		else if (!checkMapCollision(sf::Vector2f(newPos.x, position.y), aLevel))
+		else if (!aLevel.checkCollision(sf::Vector2f(newPos.x, position.y), size))
 			position.x = newPos.x;
-		else if (!checkMapCollision(sf::Vector2f(position.x, newPos.y), aLevel))
+		else if (!aLevel.checkCollision(sf::Vector2f(position.x, newPos.y), size))
 			position.y = newPos.y;
 	}
 }
