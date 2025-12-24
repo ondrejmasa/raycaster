@@ -7,9 +7,9 @@ void Level::initializeSpriteGrid()
             cell.clear();
         }
 	}
-    for (Sprite& sprite : sprites)
+    for (std::shared_ptr<Sprite> sprite : sprites)
     {
-		Sprite* spritePtr = &sprite;
+		Sprite* spritePtr = sprite.get();
 		int x = static_cast<int>(spritePtr->position.x);
 		int y = static_cast<int>(spritePtr->position.y);
 		spriteGrid[y][x].insert(spritePtr);
@@ -66,24 +66,22 @@ const bool Level::checkCollision(const sf::Vector2f& aPos, const float aSize) co
 	return false;
 }
 
-const std::vector<Sprite*> Level::getSpritesAt(const sf::Vector2f& aPos) const
+void Level::updateSpritePositions(const sf::Vector2f& aPlayerPos, const float aDeltaTime)
 {
-	std::vector<Sprite*> result;
-	sf::Vector2i p(static_cast<sf::Vector2i>(aPos));
-    for (short i = -1; i <= 1; ++i)
-    {
-        for (short j = -1; j <= 1; ++j)
-        {
-			if (p.y + j < 0 or p.y + j >= static_cast<int>(spriteGrid.size()) or
-				p.x + i < 0 or p.x + i >= static_cast<int>(spriteGrid[0].size()))
-				continue;
-            for (Sprite* s : spriteGrid[p.y + j][p.x + i])
-            {
-                result.push_back(s);
-			}
-        }
+	for (auto& sprite : sprites)
+	{
+		Sprite* spritePtr = sprite.get();
+		int xo = static_cast<int>(spritePtr->position.x);
+		int yo = static_cast<int>(spritePtr->position.y);
+		sprite->updatePos(aPlayerPos, aDeltaTime);
+		int xn = static_cast<int>(spritePtr->position.x);
+		int yn = static_cast<int>(spritePtr->position.y);
+		if (xo != xn or yo != yn)
+		{
+			spriteGrid[yo][xo].erase(spritePtr);
+			spriteGrid[yn][xn].insert(spritePtr);
+		}
 	}
-	return result;
 }
 
 Level::Level()
@@ -113,10 +111,11 @@ Level::Level()
         std::vector{1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
         std::vector{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 	},
-    sprites{
-      { sf::Vector2f(8.0, 11.0), 0, 0.8f, 0.25f*0.8f},
-      { sf::Vector2f(10.0, 11.0), 0, 1.f, 0.25f},
-    },
+	sprites{
+		std::make_shared<Sprite>(sf::Vector2f(8.0f, 11.0f), 0, 0.8f, 0.25f * 0.8f),
+		std::make_shared<Sprite>(sf::Vector2f(10.0f, 11.0f), 0, 1.0f, 0.25f),
+		std::make_shared<Enemy>(sf::Vector2f(12.0f, 11.0f), 2, 1.0f, 0.25f)
+	},
 	spriteGrid{ grid.size(), std::vector<std::set<Sprite*>>(grid[0].size()) }
 {
     initializeSpriteGrid();

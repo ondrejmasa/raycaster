@@ -13,7 +13,8 @@ int main()
         "source/textures/redbrick.png" });
     Resources::loadSpriteTextures({
         "source/textures/barrel.png",
-        "source/textures/pillar.png" });
+        "source/textures/pillar.png",
+        "source/textures/eagle.png"});
     Resources::loadFloorImage("source/textures/mossy.png");
     Resources::loadCeilImage("source/textures/redbrick.png");
     Resources::loadSkyTexture("source/textures/sky_texture.png");

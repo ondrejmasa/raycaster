@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<Sprite>& aSprites)
+void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<std::shared_ptr<Sprite>>& aSprites)
 {
 	// floor and ceil
 	float horizon = gbl::screen::height / 2.f + aPlayer.pitch;
@@ -124,14 +124,14 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 
 	// Sprites
 	auto caclSpriteDist =
-		[aPlayer](const Sprite& sprite)
+		[aPlayer](const auto& sprite)
 		{
-			return std::pow(aPlayer.position.x - sprite.position.x, 2) +
-				std::pow(aPlayer.position.y - sprite.position.y, 2);
+			return std::pow(aPlayer.position.x - sprite->position.x, 2) +
+				std::pow(aPlayer.position.y - sprite->position.y, 2);
 		};
 
 	std::sort(aSprites.begin(), aSprites.end(),
-		[&](const Sprite& a, const Sprite& b)
+		[&](const auto& a, const auto& b)
 		{
 			double distA = caclSpriteDist(a);
 			double distB = caclSpriteDist(b);
@@ -140,7 +140,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 
 	for (size_t i = 0; i < aSprites.size(); ++i)
 	{
-		const Sprite& sprite = aSprites[i];
+		const Sprite& sprite = *aSprites[i].get();
 		float spriteX = sprite.position.x - aPlayer.position.x;
 		float spriteY = sprite.position.y - aPlayer.position.y;
 		float invDet = 1.0f / (aPlayer.plane.x * aPlayer.direction.y - aPlayer.direction.x * aPlayer.plane.y);
