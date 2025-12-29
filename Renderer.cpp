@@ -197,7 +197,7 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 	aWindow->draw(rBase);
 	sf::VertexArray cells(sf::PrimitiveType::Triangles);
 
-	auto path = pf::aStarSearch(aGrid, sf::Vector2i(aPlayer.position.y, aPlayer.position.x), sf::Vector2i(22, 8));
+	auto path = pf::aStarSearch(aGrid, sf::Vector2i(aPlayer.position), sf::Vector2i(8, 22));
 
 	for (size_t i = 0; i < r; ++i)
 	{
@@ -214,7 +214,7 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 				? sf::Color::Red
 				: sf::Color::White;
 
-			if (std::find(path.begin(), path.end(), sf::Vector2i(i, j)) != path.end())
+			if (std::find(path.begin(), path.end(), sf::Vector2i(j, i)) != path.end())
 			{
 				c = sf::Color::Green;
 			}

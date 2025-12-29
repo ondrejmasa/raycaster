@@ -12,10 +12,10 @@ namespace{
                 return a.first < b.first;
             }
             // Pokud je cena stejná, porovnej souøadnice vektoru (sf::Vector2i)
-            if (a.second.x != b.second.x) {
-                return a.second.x < b.second.x;
+            if (a.second.y != b.second.y) {
+                return a.second.y < b.second.y;
             }
-            return a.second.y < b.second.y;
+            return a.second.x < b.second.x;
         }
     };
 
@@ -37,27 +37,27 @@ namespace{
 
     bool isDestination(const int row, const int col, const sf::Vector2i& dest)
     {
-        return (row == dest.x and col == dest.y);
+        return (row == dest.y and col == dest.x);
     }
 
     double calculateHValue(const int row, const int col, const sf::Vector2i& dest)
     {
-        return ((double)sqrt((row - dest.x) * (row - dest.x) + (col - dest.y) * (col - dest.y)));
+        return ((double)sqrt((row - dest.y) * (row - dest.y) + (col - dest.x) * (col - dest.x)));
     }
 
     std::vector<sf::Vector2i> tracePath(const std::vector<std::vector<cell>>& cellDetails, const sf::Vector2i& dest)
     {
-        int row = dest.x;
-        int col = dest.y;
+        int row = dest.y;
+        int col = dest.x;
         std::vector<sf::Vector2i> path;
         while (!(cellDetails[row][col].parent_i == row and cellDetails[row][col].parent_j == col)) {
-            path.push_back({ row, col });
+            path.push_back({ col, row });
             int temp_row = cellDetails[row][col].parent_i;
             int temp_col = cellDetails[row][col].parent_j;
             row = temp_row;
             col = temp_col;
         }
-        path.push_back({ row, col });
+        path.push_back({ col, row });
         std::reverse(path.begin(), path.end());
         return path;
     }
@@ -67,14 +67,14 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
 {
     {
         // Either the source or the destination is blocked
-        if (isUnBlocked(grid, src.x, src.y) == false or isUnBlocked(grid, dest.x, dest.y) == false)
+        if (isUnBlocked(grid, src.y, src.x) == false or isUnBlocked(grid, dest.y, dest.x) == false)
         {
             //printf("Source or the destination is blocked\n");
             //return{};
         }
 
         // If the destination cell is the same as source cell
-        if (isDestination(src.x, src.y, dest) == true)
+        if (isDestination(src.y, src.x, dest) == true)
         {
             //printf("We are already at the destination\n");
             return{};
@@ -103,7 +103,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
         }
 
         // Initialising the parameters of the starting node
-        int i = src.x; int j = src.y;
+        int i = src.y; int j = src.x;
         cellDetails[i][j].f = 0.0;
         cellDetails[i][j].g = 0.0;
         cellDetails[i][j].h = 0.0;
@@ -122,7 +122,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
 
         // Put the starting cell on the open list and set its
         // 'f' as 0
-        openList.insert(std::make_pair(0.0, sf::Vector2i(i, j)));
+        openList.insert(std::make_pair(0.0, sf::Vector2i(j, i)));
 
         // We set this boolean value as false as initially
         // the destination is not reached.
@@ -135,8 +135,8 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
             openList.erase(openList.begin());
 
             // Add this vertex to the closed list
-            i = p.second.x;
-            j = p.second.y;
+            i = p.second.y;
+            j = p.second.x;
             closedList[i][j] = true;
 
             /*
@@ -196,7 +196,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i - 1][j].f == FLT_MAX
                         || cellDetails[i - 1][j].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i - 1, j)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j, i - 1)));
 
                         // Update the details of this cell
                         cellDetails[i - 1][j].f = fNew;
@@ -241,7 +241,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i + 1][j].f == FLT_MAX
                         || cellDetails[i + 1][j].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i + 1, j)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j, i + 1)));
                         // Update the details of this cell
                         cellDetails[i + 1][j].f = fNew;
                         cellDetails[i + 1][j].g = gNew;
@@ -286,7 +286,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i][j + 1].f == FLT_MAX
                         || cellDetails[i][j + 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i, j + 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j + 1, i)));
 
                         // Update the details of this cell
                         cellDetails[i][j + 1].f = fNew;
@@ -332,7 +332,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i][j - 1].f == FLT_MAX
                         || cellDetails[i][j - 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i, j - 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j - 1, i)));
 
                         // Update the details of this cell
                         cellDetails[i][j - 1].f = fNew;
@@ -379,7 +379,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i - 1][j + 1].f == FLT_MAX
                         || cellDetails[i - 1][j + 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i - 1, j + 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j + 1, i - 1)));
 
                         // Update the details of this cell
                         cellDetails[i - 1][j + 1].f = fNew;
@@ -426,7 +426,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i - 1][j - 1].f == FLT_MAX
                         || cellDetails[i - 1][j - 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i - 1, j - 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j - 1, i - 1)));
                         // Update the details of this cell
                         cellDetails[i - 1][j - 1].f = fNew;
                         cellDetails[i - 1][j - 1].g = gNew;
@@ -472,7 +472,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i + 1][j + 1].f == FLT_MAX
                         || cellDetails[i + 1][j + 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i + 1, j + 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j + 1, i + 1)));
 
                         // Update the details of this cell
                         cellDetails[i + 1][j + 1].f = fNew;
@@ -519,7 +519,7 @@ std::vector<sf::Vector2i> pf::aStarSearch(const std::vector<std::vector<int>>& g
                     // better, using 'f' cost as the measure.
                     if (cellDetails[i + 1][j - 1].f == FLT_MAX
                         || cellDetails[i + 1][j - 1].f > fNew) {
-                        openList.insert(std::make_pair(fNew, sf::Vector2i(i + 1, j - 1)));
+                        openList.insert(std::make_pair(fNew, sf::Vector2i(j - 1, i + 1)));
 
                         // Update the details of this cell
                         cellDetails[i + 1][j - 1].f = fNew;
