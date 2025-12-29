@@ -8,6 +8,9 @@ class Level
 {
 private:
 	void initializeSpriteGrid();
+	const bool checkWallCollision(const sf::Vector2f& aPos, const float aSize) const;
+	const bool checkSpriteCollision(const sf::Vector2f& aPos, const float aSize) const;
+	void avoidSprites(const Enemy* aEnemy, sf::Vector2f& aPos) const;
 public:
 	std::vector<std::vector<int>> grid;
 	std::vector<std::shared_ptr<Sprite>> sprites;

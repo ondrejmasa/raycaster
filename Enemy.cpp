@@ -6,10 +6,10 @@ Enemy::Enemy(const sf::Vector2f& aPos, const int aTex, const float aScale, const
 {
 }
 
-void Enemy::updateDirection(const std::vector<std::vector<int>>& aGrid, const sf::Vector2f& aPlayerPos, const float aDeltaTime)
+void Enemy::updateDirection(const std::vector<std::vector<int>>& aGrid, const sf::Vector2f& aPlayerPos)
 {
-    sf::Vector2f dirToPlayer = (aPlayerPos - position).normalized();
-    sf::Vector2f sideStep = sf::Vector2f(-dirToPlayer.y, dirToPlayer.x) * size;
+    sf::Vector2f dirToPlayer = (aPlayerPos - position);
+    sf::Vector2f sideStep = sf::Vector2f(-dirToPlayer.y, dirToPlayer.x).normalized() * size;
     Ray ray;
     bool isDirect = true;
 	// test if enemy can see player directly if yes, go straight to him, else pathfinding
@@ -27,8 +27,14 @@ void Enemy::updateDirection(const std::vector<std::vector<int>>& aGrid, const sf
 	}
     if (isDirect)
     {
-        direction = dirToPlayer;
-
+        if (dirToPlayer.lengthSquared() < maxDistToPlayer*maxDistToPlayer)
+        {
+            direction = sf::Vector2f(0.f, 0.f);
+            return;
+		}
+        direction = dirToPlayer.normalized();
+        
+		// avoid walls
         for (short a = -1; a <= 1; a += 2)
         {
             sf::Vector2f sideDir = sf::Vector2f(-dirToPlayer.y, dirToPlayer.x) * static_cast<float>(a);
