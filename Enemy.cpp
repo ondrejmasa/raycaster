@@ -43,10 +43,10 @@ void Enemy::updateDirection(const std::vector<std::vector<int>>& aGrid, const sf
     }
 	else
     {
-		std::vector<pf::Pair> path = pf::aStarSearch(aGrid, pf::Pair(position.y, position.x), pf::Pair(aPlayerPos.y, aPlayerPos.x));
+		std::vector<sf::Vector2i> path = pf::aStarSearch(aGrid, sf::Vector2i(position.y, position.x), sf::Vector2i(aPlayerPos.y, aPlayerPos.x));
 		size_t size = path.size();
 		if (size <= 1) return;
-		direction = sf::Vector2f(path[1].second + 0.5f, path[1].first + 0.5f) - position;
+		direction = sf::Vector2f(path[1].y + 0.5f, path[1].x + 0.5f) - position;
 		direction = direction.normalized();
 	}
 }
