@@ -11,9 +11,10 @@ private:
 public:
 	std::vector<std::vector<int>> grid;
 	std::vector<std::shared_ptr<Sprite>> sprites;
+	std::vector<std::shared_ptr<Enemy>> enemies;
 	std::vector<std::vector<std::set<Sprite*>>> spriteGrid;
 	Level();
 	const bool checkCollision(const sf::Vector2f& aPos, const float aSize) const;
-	void updateSpritePositions(const sf::Vector2f& aPlayerPos, const float aDeltaTime);
+	void updateEnemyPositions(const sf::Vector2f& aPlayerPos, const float aDeltaTime);
 };
 

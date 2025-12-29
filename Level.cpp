@@ -2,22 +2,32 @@
 
 void Level::initializeSpriteGrid()
 {
-    for (auto& row : spriteGrid) {
+    for (auto& row : spriteGrid) 
+	{
         for (auto& cell : row) {
             cell.clear();
         }
 	}
-    for (std::shared_ptr<Sprite> sprite : sprites)
-    {
-		Sprite* spritePtr = sprite.get();
-		int x = static_cast<int>(spritePtr->position.x);
-		int y = static_cast<int>(spritePtr->position.y);
-		spriteGrid[y][x].insert(spritePtr);
-    }
+
+	auto addToGrid = [&](const auto& container)
+	{
+		for (const auto& sprite : container)
+		{
+			int x = static_cast<int>(sprite->position.x);
+			int y = static_cast<int>(sprite->position.y);
+			spriteGrid[y][x].insert(sprite.get());
+		}
+	};
+	addToGrid(sprites);
+	addToGrid(enemies);
 }
 
 const bool Level::checkCollision(const sf::Vector2f& aPos, const float aSize) const
 {
+	if (aPos.x < 0.f or aPos.y < 0.f or
+		aPos.x + aSize >= static_cast<float>(grid[0].size()) or
+		aPos.y + aSize >= static_cast<float>(grid.size()))
+		return true;
 	float x; float y;
 	for (unsigned char i = 0; i < 4; ++i)
 	{
@@ -58,7 +68,7 @@ const bool Level::checkCollision(const sf::Vector2f& aPos, const float aSize) co
 				if (std::abs(aPos.x - s->position.x) < (aSize + s->size) and
 					std::abs(aPos.y - s->position.y) < (aSize + s->size))
 				{
-					return true;
+					//return true;
 				}
 			}
 		}
@@ -66,20 +76,25 @@ const bool Level::checkCollision(const sf::Vector2f& aPos, const float aSize) co
 	return false;
 }
 
-void Level::updateSpritePositions(const sf::Vector2f& aPlayerPos, const float aDeltaTime)
+void Level::updateEnemyPositions(const sf::Vector2f& aPlayerPos, const float aDeltaTime)
 {
-	for (auto& sprite : sprites)
+	for (auto& enemy : enemies)
 	{
-		Sprite* spritePtr = sprite.get();
-		int xo = static_cast<int>(spritePtr->position.x);
-		int yo = static_cast<int>(spritePtr->position.y);
-		sprite->updatePos(aPlayerPos, aDeltaTime);
-		int xn = static_cast<int>(spritePtr->position.x);
-		int yn = static_cast<int>(spritePtr->position.y);
-		if (xo != xn or yo != yn)
+		Enemy* enemyPtr = enemy.get();
+		int xo = static_cast<int>(enemyPtr->position.x);
+		int yo = static_cast<int>(enemyPtr->position.y);
+		enemy->updateDirection(grid, aPlayerPos, aDeltaTime);
+		sf::Vector2f newPos = enemy->position + enemy->direction * enemy->speed * aDeltaTime;
+		if (!checkCollision(sf::Vector2f(newPos.x, enemy->position.y), enemy->size))
+			enemy->position.x = newPos.x;
+		if (!checkCollision(sf::Vector2f(enemy->position.x, newPos.y), enemy->size))
+			enemy->position.y = newPos.y;
+		int xn = static_cast<int>(enemyPtr->position.x);
+		int yn = static_cast<int>(enemyPtr->position.y);
+		if ((xo != xn or yo != yn) and (yn >= 0 and yn < spriteGrid.size() and xn >= 0 and xn < spriteGrid[0].size()))
 		{
-			spriteGrid[yo][xo].erase(spritePtr);
-			spriteGrid[yn][xn].insert(spritePtr);
+			spriteGrid[yo][xo].erase(enemyPtr);
+			spriteGrid[yn][xn].insert(enemyPtr);
 		}
 	}
 }
@@ -113,8 +128,10 @@ Level::Level()
 	},
 	sprites{
 		std::make_shared<Sprite>(sf::Vector2f(8.0f, 11.0f), 0, 0.8f, 0.25f * 0.8f),
-		std::make_shared<Sprite>(sf::Vector2f(10.0f, 11.0f), 0, 1.0f, 0.25f),
-		std::make_shared<Enemy>(sf::Vector2f(12.0f, 11.0f), 2, 1.0f, 0.25f)
+		std::make_shared<Sprite>(sf::Vector2f(10.0f, 11.0f), 0, 1.0f, 0.25f)
+	},
+	enemies{ 
+		std::make_shared<Enemy>(sf::Vector2f(12.0f, 11.0f), 2, 1.0f, 0.25f) 
 	},
 	spriteGrid{ grid.size(), std::vector<std::set<Sprite*>>(grid[0].size()) }
 {

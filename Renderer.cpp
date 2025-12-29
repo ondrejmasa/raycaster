@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<std::shared_ptr<Sprite>>& aSprites)
+void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, Level& aLevel)
 {
 	// floor and ceil
 	float horizon = gbl::screen::height / 2.f + aPlayer.pitch;
@@ -123,6 +123,12 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 	}
 
 	// Sprites
+	std::vector<Sprite*> allSprites;
+	allSprites.reserve(aLevel.sprites.size() + aLevel.enemies.size());
+
+	for (const auto& s : aLevel.sprites) allSprites.push_back(s.get());
+	for (const auto& e : aLevel.enemies) allSprites.push_back(e.get());
+
 	auto caclSpriteDist =
 		[aPlayer](const auto& sprite)
 		{
@@ -130,7 +136,7 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 				std::pow(aPlayer.position.y - sprite->position.y, 2);
 		};
 
-	std::sort(aSprites.begin(), aSprites.end(),
+	std::sort(allSprites.begin(), allSprites.end(),
 		[&](const auto& a, const auto& b)
 		{
 			double distA = caclSpriteDist(a);
@@ -138,9 +144,9 @@ void Renderer::renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aR
 			return distA > distB;
 		});
 
-	for (size_t i = 0; i < aSprites.size(); ++i)
+	for (size_t i = 0; i < allSprites.size(); ++i)
 	{
-		const Sprite& sprite = *aSprites[i].get();
+		const Sprite& sprite = *allSprites[i];
 		float spriteX = sprite.position.x - aPlayer.position.x;
 		float spriteY = sprite.position.y - aPlayer.position.y;
 		float invDet = 1.0f / (aPlayer.plane.x * aPlayer.direction.y - aPlayer.direction.x * aPlayer.plane.y);
@@ -190,6 +196,9 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 	sf::RectangleShape rBase(aScale * sf::Vector2f(static_cast<float>(c * cellSize), static_cast<float>(r * cellSize)));
 	aWindow->draw(rBase);
 	sf::VertexArray cells(sf::PrimitiveType::Triangles);
+
+	auto path = pf::aStarSearch(aGrid, std::make_pair(aPlayer.position.y, aPlayer.position.x), std::make_pair(22, 8));
+
 	for (size_t i = 0; i < r; ++i)
 	{
 		for (size_t j = 0; j < c; ++j)
@@ -204,6 +213,12 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 			sf::Color c = (aGrid[i][j] > 0)
 				? sf::Color::Red
 				: sf::Color::White;
+
+			if (std::find(path.begin(), path.end(), std::make_pair(i, j)) != path.end())
+			{
+				c = sf::Color::Green;
+			}
+
 			cells.append({ p0, c });
 			cells.append({ p1, c });
 			cells.append({ p2, c });
@@ -213,8 +228,8 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 		}
 	}
 	aWindow->draw(cells);
-	sf::CircleShape p(aScale * (aPlayer.size / 2) * cellSize);
-	p.setFillColor(sf::Color::Green);
+	sf::CircleShape p(aScale * (aPlayer.size) * cellSize);
+	p.setFillColor(sf::Color::Black);
 	p.setPosition(aScale * aPlayer.position * cellSize);
 	aWindow->draw(p);
 
@@ -229,7 +244,8 @@ void Renderer::renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRay
 		lines.append(v1);
 		lines.append(v2);
 	}
-	aWindow->draw(lines);
+
+	//aWindow->draw(lines);
 }
 
 Renderer::Renderer()

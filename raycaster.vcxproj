@@ -137,6 +137,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Pathfinding.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Ray.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="Level.h" />
+    <ClInclude Include="Pathfinding.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />

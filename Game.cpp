@@ -66,12 +66,12 @@ void Game::update()
 {
 	updateFPS();
 	pollEvents();
-	level.updateSpritePositions(player.position, deltaTime);
 	const sf::Vector2i mp = sf::Mouse::getPosition(*window);
 	const sf::Vector2i md = mp - center;
-	window->setMouseCursorVisible(!isGamePaused);
-	if (isGamePaused)
+	window->setMouseCursorVisible(isGamePaused);
+	if (!isGamePaused)
 	{
+		level.updateEnemyPositions(player.position, deltaTime);
 		player.updateInput(deltaTime, md, level);
 		sf::Mouse::setPosition(center, *window);
 	}
@@ -82,7 +82,7 @@ void Game::render()
 {
 	window->clear();
 
-	renderer.renderWorld(window, rays, player, level.sprites);
+	renderer.renderWorld(window, rays, player, level);
 	renderer.renderMap(window, rays, player,level.grid, 0.2f);
 
 	window->display();

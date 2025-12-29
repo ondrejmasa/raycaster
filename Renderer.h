@@ -6,6 +6,8 @@
 #include "Ray.h"
 #include "Sprite.h"
 #include "Player.h"
+#include "Pathfinding.h"
+#include "Level.h"
 
 
 class Renderer
@@ -17,7 +19,7 @@ private:
 	sf::VertexArray spriteStripes;
 
 public:
-	void renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, std::vector<std::shared_ptr<Sprite>>& aSprites);
+	void renderWorld(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, Level& aLevel);
 	void renderMap(sf::RenderTarget* aWindow, const std::vector<Ray>& aRays, const Player& aPlayer, const std::vector<std::vector<int>>& aGrid, const float aScale);
 	Renderer();
 };

@@ -40,13 +40,10 @@ void Player::updateInput(const float aDeltaTime, const sf::Vector2i& aMouseDelta
 	if (p.length() > 0)
 	{
 		p = p.normalized() * speed * aDeltaTime;
-
 		sf::Vector2f newPos = position + p;
-		if (!aLevel.checkCollision(newPos, size))
-			position = newPos;
-		else if (!aLevel.checkCollision(sf::Vector2f(newPos.x, position.y), size))
+		if (!aLevel.checkCollision(sf::Vector2f(newPos.x, position.y), size))
 			position.x = newPos.x;
-		else if (!aLevel.checkCollision(sf::Vector2f(position.x, newPos.y), size))
+		if (!aLevel.checkCollision(sf::Vector2f(position.x, newPos.y), size))
 			position.y = newPos.y;
 	}
 }
